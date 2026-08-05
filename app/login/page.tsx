@@ -31,7 +31,7 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-4 bg-[var(--bg-primary)] transition-colors duration-300">
-      <div className="relative w-full max-w-[380px] p-6 sm:p-7 rounded-[28px] bg-[var(--bg-surface)] border border-[var(--border-color)] shadow-2xl flex flex-col items-center text-center backdrop-blur-sm">
+      <div className="relative w-full max-w-md p-6 sm:p-9 rounded-[28px] bg-[var(--bg-surface)] border border-[var(--border-color)] shadow-2xl flex flex-col items-center text-center backdrop-blur-sm">
         
         <Link
           href="/"
@@ -42,7 +42,7 @@ export default function AuthPage() {
         </Link>
 
         <div className="relative mb-4 mt-1">
-          <div  className="relative flex items-center justify-center p-1.5 rounded-xl bg-gradient-to-tr from-[#2DD4BF] to-[#3B82F6] shadow-sm transition-transform duration-200 ">
+          <div className="relative flex items-center justify-center p-1.5 rounded-xl bg-gradient-to-tr from-[#2DD4BF] to-[#3B82F6] shadow-sm transition-transform duration-200">
             <Image
               src={logo}
               alt="Ad Pilot Logo"
@@ -58,7 +58,7 @@ export default function AuthPage() {
           {mode === "login" ? "Sign in with email" : "Create an account"}
         </h1>
 
-        <form onSubmit={handleSubmit} className="w-full space-y-3">
+        <form onSubmit={handleSubmit} className="w-full space-y-3.5">
           {mode === "signup" && (
             <div className="relative flex items-center">
               <User className="absolute left-3.5 w-4 h-4 text-[var(--text-secondary)] pointer-events-none" />
@@ -126,7 +126,7 @@ export default function AuthPage() {
           </button>
         </form>
 
-        <div className="relative w-full flex items-center justify-center my-5">
+        <div className="relative w-full flex items-center justify-center my-6">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-[var(--border-color)]/60 border-dashed" />
           </div>
@@ -135,23 +135,25 @@ export default function AuthPage() {
           </span>
         </div>
 
-        <div className="grid grid-cols-2 gap-2.5 w-full">
+        <div className="grid grid-cols-2 gap-3 w-full">
           <button
             type="button"
-            className="flex items-center justify-center h-10 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-color)] hover:bg-[var(--bg-accent)] transition-all duration-200 group"
+            className="flex items-center justify-center gap-2 h-10 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-color)] hover:bg-[var(--bg-accent)] transition-all duration-200 group text-xs font-medium text-[var(--text-primary)]"
           >
             <FaFacebook className="w-4 h-4 text-[#1877F2] group-hover:scale-110 transition-transform duration-200" />
+            <span>Facebook</span>
           </button>
 
           <button
             type="button"
-            className="flex items-center justify-center h-10 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-color)] hover:bg-[var(--bg-accent)] transition-all duration-200 group"
+            className="flex items-center justify-center gap-2 h-10 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-color)] hover:bg-[var(--bg-accent)] transition-all duration-200 group text-xs font-medium text-[var(--text-primary)]"
           >
             <FaMeta className="w-4 h-4 text-[#3B82F6] group-hover:scale-110 transition-transform duration-200" />
+            <span>Meta</span>
           </button>
         </div>
 
-        <div className="mt-5 text-xs text-[var(--text-secondary)]">
+        <div className="mt-6 text-xs text-[var(--text-secondary)]">
           {mode === "login" ? (
             <p>
               Don&apos;t have an account?{" "}
