@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import {  LayoutDashboard,  Target,  Sparkles,  Settings,  User,  Zap,  Menu,  X,  LogOut } from 'lucide-react';
+import { LayoutDashboard, Target, Sparkles, Settings, User, Zap, Menu, X, LogOut } from 'lucide-react';
 import logo from '@/public/ad-logo.png';
 
 interface SidebarProps {
@@ -68,7 +68,7 @@ export default function Sidebar({ userPlan = 'free' }: SidebarProps) {
                 />
               </div>
               <span className="text-xl font-black text-[var(--text-primary)] tracking-tight">
-                Ad <span className="bg-gradient-to-r from-[#3B82F6] via-[#2DD4BF] to-[#3B82F6] bg-clip-text text-transparent">Pilot</span>
+                Ad Pilot
               </span>
             </Link>
 
@@ -94,7 +94,7 @@ export default function Sidebar({ userPlan = 'free' }: SidebarProps) {
                   onClick={() => setIsOpen(false)}
                   className={`flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all ${
                     isActive
-                      ? 'bg-gradient-to-r from-[#3B82F6] to-[#2DD4BF] text-white shadow-md shadow-[#3B82F6]/20'
+                      ? 'bg-[#3B82F6] text-white shadow-md shadow-[#3B82F6]/20'
                       : 'text-[var(--text-secondary)] hover:bg-[var(--bg-accent)] hover:text-[var(--text-primary)]'
                   }`}
                 >
@@ -133,7 +133,7 @@ export default function Sidebar({ userPlan = 'free' }: SidebarProps) {
               </p>
               <Link
                 href="/pricing"
-                className="mt-3 block text-center w-full py-2 bg-gradient-to-r from-[#3B82F6] to-[#2DD4BF] hover:opacity-95 text-white font-extrabold text-xs rounded-lg transition-all shadow-md shadow-[#3B82F6]/20"
+                className="mt-3 block text-center w-full py-2 bg-[#3B82F6] hover:bg-[#2563EB] text-white font-extrabold text-xs rounded-lg transition-all shadow-md shadow-[#3B82F6]/20"
               >
                 Upgrade ($29/mo)
               </Link>

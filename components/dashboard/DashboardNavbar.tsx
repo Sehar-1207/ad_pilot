@@ -29,7 +29,7 @@ export default function DashboardNavbar({
           className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all ${
             isMetaConnected
               ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30'
-              : 'bg-gradient-to-r from-[#3B82F6] to-[#2DD4BF] text-white border-transparent hover:opacity-95 shadow-md shadow-[#3B82F6]/20 active:scale-[0.98]'
+              : 'bg-[#3B82F6] text-white border-transparent hover:bg-[#2563EB] shadow-md shadow-[#3B82F6]/20 active:scale-[0.98]'
           }`}
         >
           {isMetaConnected ? (
@@ -57,7 +57,7 @@ export default function DashboardNavbar({
           href="/dashboard/profile"
           className="flex items-center gap-2.5 pl-3 border-l border-[var(--border-color)] hover:opacity-90 transition-opacity"
         >
-          <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#3B82F6] to-[#2DD4BF] text-white flex items-center justify-center text-xs font-black shadow-sm ring-2 ring-[var(--border-color)]">
+          <div className="w-9 h-9 rounded-full bg-[#3B82F6] text-white flex items-center justify-center text-xs font-black shadow-sm ring-2 ring-[var(--border-color)]">
             {initials}
           </div>
           
