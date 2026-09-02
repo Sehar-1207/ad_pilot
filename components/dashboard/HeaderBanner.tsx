@@ -15,6 +15,7 @@ export function HeaderBanner({ userPlan, onSync }: HeaderBannerProps) {
         <h1 className="text-xl sm:text-2xl font-black text-[var(--text-primary)] tracking-tight leading-snug truncate">
           Campaign Performance
         </h1>
+
         <p className="text-xs sm:text-sm font-medium text-[var(--text-secondary)] mt-1 leading-relaxed">
           Real-time Meta advertising analytics and Gemini AI suggestions.
         </p>
@@ -30,15 +31,19 @@ export function HeaderBanner({ userPlan, onSync }: HeaderBannerProps) {
           <RefreshCw size={14} className="shrink-0" />
           <span className="whitespace-nowrap">Sync Data</span>
         </button>
+
         {userPlan === 'free' && (
           <Link
             href="/pricing"
             className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-[var(--brand-blue)] hover:bg-[var(--primary-hover)] text-white text-xs font-extrabold rounded-xl transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.98] cursor-pointer"
           >
             <Sparkles size={14} className="fill-white shrink-0" />
-            <span className="whitespace-nowrap">Upgrade to Pro ($29/mo)</span>
+            <span className="whitespace-nowrap">
+              Upgrade to Pro ($29/mo)
+            </span>
           </Link>
         )}
+
       </div>
     </header>
   );

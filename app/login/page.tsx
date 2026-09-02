@@ -4,35 +4,91 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Mail, Lock, User, Eye, EyeOff, X } from "lucide-react";
-import { FaFacebook, FaMeta } from "react-icons/fa6";
 import logo from "@/public/ad-logo.png";
+
+import { loginUser, registerUser } from "@/api/auth";
 
 type AuthMode = "login" | "signup";
 
 export default function AuthPage() {
   const [mode, setMode] = useState<AuthMode>("login");
   const [showPassword, setShowPassword] = useState<boolean>(false);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
   });
 
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
     }));
+
+    setError("");
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
+  const handleSubmit = async (
+    e: React.FormEvent<HTMLFormElement>
+  ): Promise<void> => {
     e.preventDefault();
+
+    if (loading) return;
+
+    setLoading(true);
+    setError("");
+
+    try {
+      if (mode === "login") {
+        await loginUser(
+          formData.email.trim(),
+          formData.password
+        );
+      } else {
+        await registerUser(
+          formData.name.trim(),
+          formData.email.trim(),
+          formData.password
+        );
+      }
+
+      // Backend stores JWT in HTTP-only cookie.
+      // We do NOT store the token in localStorage.
+      window.location.href = "/dashboard";
+    } catch (err: any) {
+      console.error("Auth error:", err);
+
+      const message =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Something went wrong. Please try again.";
+
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const switchMode = (newMode: AuthMode) => {
+    setMode(newMode);
+    setError("");
+    setFormData({
+      name: "",
+      email: "",
+      password: "",
+    });
+    setShowPassword(false);
   };
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-4 bg-[var(--bg-primary)] transition-colors duration-300">
       <div className="relative w-full max-w-md p-6 sm:p-9 rounded-[28px] bg-[var(--bg-surface)] border border-[var(--border-color)] shadow-2xl flex flex-col items-center text-center backdrop-blur-sm">
-        
+
         <Link
           href="/"
           className="absolute top-5 right-5 p-2 rounded-full text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-accent)] transition-all duration-200"
@@ -98,60 +154,40 @@ export default function AuthPage() {
               placeholder="Password"
               className="w-full pl-10 pr-10 py-2.5 text-sm rounded-xl bg-[var(--bg-primary)] border border-transparent focus:border-[#3B82F6] text-[var(--text-primary)] placeholder-[var(--text-secondary)]/60 outline-none transition-all duration-200"
             />
+
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
             >
-              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {showPassword ? (
+                <EyeOff className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
             </button>
           </div>
 
-          {mode === "login" && (
-            <div className="flex justify-end pt-0.5">
-              <button
-                type="button"
-                className="text-[11px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] font-medium transition-colors"
-              >
-                Forgot password?
-              </button>
+          {error && (
+            <div className="text-xs text-red-500 text-left px-1">
+              {error}
             </div>
           )}
 
           <button
             type="submit"
-            className="w-full mt-1 py-3 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-[#3B82F6] to-[#2DD4BF] hover:opacity-95 shadow-md shadow-[#3B82F6]/20 active:scale-[0.99] transition-all duration-200"
+            disabled={loading}
+            className="w-full mt-1 py-3 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-[#3B82F6] to-[#2DD4BF] hover:opacity-95 shadow-md shadow-[#3B82F6]/20 active:scale-[0.99] transition-all duration-200 disabled:opacity-70"
           >
-            {mode === "login" ? "Get Started" : "Create Account"}
+            {loading
+              ? mode === "login"
+                ? "Signing in..."
+                : "Creating Account..."
+              : mode === "login"
+                ? "Get Started"
+                : "Create Account"}
           </button>
         </form>
-
-        <div className="relative w-full flex items-center justify-center my-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-[var(--border-color)]/60 border-dashed" />
-          </div>
-          <span className="relative px-3 text-[10px] font-medium text-[var(--text-secondary)] bg-[var(--bg-surface)]">
-            Or {mode === "login" ? "sign in" : "sign up"} with
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3 w-full">
-          <button
-            type="button"
-            className="flex items-center justify-center gap-2 h-10 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-color)] hover:bg-[var(--bg-accent)] transition-all duration-200 group text-xs font-medium text-[var(--text-primary)]"
-          >
-            <FaFacebook className="w-4 h-4 text-[#1877F2] group-hover:scale-110 transition-transform duration-200" />
-            <span>Facebook</span>
-          </button>
-
-          <button
-            type="button"
-            className="flex items-center justify-center gap-2 h-10 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-color)] hover:bg-[var(--bg-accent)] transition-all duration-200 group text-xs font-medium text-[var(--text-primary)]"
-          >
-            <FaMeta className="w-4 h-4 text-[#3B82F6] group-hover:scale-110 transition-transform duration-200" />
-            <span>Meta</span>
-          </button>
-        </div>
 
         <div className="mt-6 text-xs text-[var(--text-secondary)]">
           {mode === "login" ? (
@@ -159,7 +195,7 @@ export default function AuthPage() {
               Don&apos;t have an account?{" "}
               <button
                 type="button"
-                onClick={() => setMode("signup")}
+                onClick={() => switchMode("signup")}
                 className="font-semibold text-[#3B82F6] hover:underline"
               >
                 Sign up
@@ -170,7 +206,7 @@ export default function AuthPage() {
               Already have an account?{" "}
               <button
                 type="button"
-                onClick={() => setMode("login")}
+                onClick={() => switchMode("login")}
                 className="font-semibold text-[#3B82F6] hover:underline"
               >
                 Log in

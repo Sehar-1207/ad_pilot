@@ -3,9 +3,21 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Target, Sparkles, Settings, User, Zap, Menu, X, LogOut } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import {
+  LayoutDashboard,
+  Target,
+  Sparkles,
+  Settings,
+  User,
+  Zap,
+  Menu,
+  X,
+  LogOut
+} from 'lucide-react';
+
 import logo from '@/public/ad-logo.png';
+import { logoutUser } from '@/api/auth';
 
 interface SidebarProps {
   userPlan?: 'free' | 'pro';
@@ -13,7 +25,10 @@ interface SidebarProps {
 
 export default function Sidebar({ userPlan = 'free' }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+
   const [isOpen, setIsOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const navItems = [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -27,6 +42,23 @@ export default function Sidebar({ userPlan = 'free' }: SidebarProps) {
     { label: 'Settings', href: '/dashboard/settings', icon: Settings },
     { label: 'Profile', href: '/dashboard/profile', icon: User },
   ];
+
+  const handleLogout = async () => {
+    if (loggingOut) return;
+
+    try {
+      setLoggingOut(true);
+
+      await logoutUser();
+
+      router.replace('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      router.replace('/login');
+    } finally {
+      setLoggingOut(false);
+    }
+  };
 
   return (
     <>
@@ -67,6 +99,7 @@ export default function Sidebar({ userPlan = 'free' }: SidebarProps) {
                   priority
                 />
               </div>
+
               <span className="text-xl font-black text-[var(--text-primary)] tracking-tight">
                 Ad Pilot
               </span>
@@ -99,7 +132,10 @@ export default function Sidebar({ userPlan = 'free' }: SidebarProps) {
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <Icon size={18} className={isActive ? 'stroke-[2.5]' : ''} />
+                    <Icon
+                      size={18}
+                      className={isActive ? 'stroke-[2.5]' : ''}
+                    />
                     <span>{item.label}</span>
                   </div>
 
@@ -121,16 +157,22 @@ export default function Sidebar({ userPlan = 'free' }: SidebarProps) {
             })}
           </nav>
         </div>
+
         <div className="p-4 border-t border-[var(--border-color)] space-y-3">
           {userPlan === 'free' ? (
             <div className="p-3.5 bg-[var(--bg-accent)] rounded-xl border border-[var(--border-color)]">
               <div className="flex items-center gap-2 text-[var(--text-primary)] font-extrabold text-xs">
-                <Zap size={14} className="text-[#2DD4BF] fill-[#2DD4BF]" />
+                <Zap
+                  size={14}
+                  className="text-[#2DD4BF] fill-[#2DD4BF]"
+                />
                 <span>Free Plan</span>
               </div>
+
               <p className="text-[11px] text-[var(--text-secondary)] mt-1 leading-snug">
                 Unlock AI Insights & real-time sync.
               </p>
+
               <Link
                 href="/pricing"
                 className="mt-3 block text-center w-full py-2 bg-[#3B82F6] hover:bg-[#2563EB] text-white font-extrabold text-xs rounded-lg transition-all shadow-md shadow-[#3B82F6]/20"
@@ -140,17 +182,33 @@ export default function Sidebar({ userPlan = 'free' }: SidebarProps) {
             </div>
           ) : (
             <div className="p-3 bg-[var(--bg-accent)] rounded-xl border border-[#2DD4BF]/30 flex items-center gap-2.5">
-              <Zap size={16} className="text-[#2DD4BF] fill-[#2DD4BF]" />
+              <Zap
+                size={16}
+                className="text-[#2DD4BF] fill-[#2DD4BF]"
+              />
+
               <div>
-                <p className="text-xs font-black text-[var(--text-primary)]">Pro Subscriber</p>
-                <p className="text-[10px] text-[#2DD4BF] font-semibold">Unlimited AI Features</p>
+                <p className="text-xs font-black text-[var(--text-primary)]">
+                  Pro Subscriber
+                </p>
+
+                <p className="text-[10px] text-[#2DD4BF] font-semibold">
+                  Unlimited AI Features
+                </p>
               </div>
             </div>
           )}
 
-          <button className="flex items-center gap-3 w-full px-4 py-2 text-xs font-bold text-[var(--text-secondary)] hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors">
+          <button
+            onClick={handleLogout}
+            disabled={loggingOut}
+            className="flex items-center gap-3 w-full px-4 py-2 text-xs font-bold text-[var(--text-secondary)] hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors disabled:opacity-50"
+          >
             <LogOut size={16} />
-            <span>Log Out</span>
+
+            <span>
+              {loggingOut ? 'Logging Out...' : 'Log Out'}
+            </span>
           </button>
         </div>
       </aside>

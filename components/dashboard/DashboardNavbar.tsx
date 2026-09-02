@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Bell, CheckCircle2 } from 'lucide-react';
 import { FaFacebook } from 'react-icons/fa6';
+import { connectMeta } from '@/api/meta';
 
 interface DashboardNavbarProps {
   isMetaConnected?: boolean;
@@ -26,6 +27,7 @@ export default function DashboardNavbar({
       <div className="flex items-center gap-3 sm:gap-4">
         
         <button
+          onClick={!isMetaConnected ? connectMeta : undefined}
           className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all ${
             isMetaConnected
               ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30'
