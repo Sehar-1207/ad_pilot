@@ -1,161 +1,556 @@
+
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+
 import CampaignHeader from '@/components/dashboard/campaign/CampaignHeader';
 import CampaignMetrics from '@/components/dashboard/campaign/CompaignMetrics';
 import CampaignFilters from '@/components/dashboard/campaign/CompaignFilter';
-import CampaignTable, { CampaignData } from '@/components/dashboard/campaign/CompaignTable';
+import CampaignTable, {
+  CampaignData,
+} from '@/components/dashboard/campaign/CompaignTable';
 import ProUpgradeBanner from '@/components/dashboard/campaign/ProBanner';
+
+import apiClient from '@/api/client';
 
 type UserTier = 'free' | 'pro';
 
-const MOCK_CAMPAIGNS: CampaignData[] = [
-  {
-    id: 'cmp_1',
-    name: 'Summer Retargeting - Conversions',
-    status: 'active',
-    healthStatus: 'Profitable',
-    spend: 1240.0,
-    clicks: 3420,
-    ctr: 2.8,
-    cpc: 0.36,
-    roas: 3.4,
-    conversions: 142,
-    impressions: 122140,
-    frequency: 2.1,
-  },
-  {
-    id: 'cmp_2',
-    name: 'Lookalike Audience - Creative B',
-    status: 'active',
-    healthStatus: 'Profitable',
-    spend: 850.5,
-    clicks: 1910,
-    ctr: 1.9,
-    cpc: 0.44,
-    roas: 2.1,
-    conversions: 68,
-    impressions: 100520,
-    frequency: 1.8,
-  },
-  {
-    id: 'cmp_3',
-    name: 'Brand Awareness - Top of Funnel',
-    status: 'paused',
-    healthStatus: 'Fatigued',
-    spend: 410.0,
-    clicks: 980,
-    ctr: 1.2,
-    cpc: 0.41,
-    roas: 1.4,
-    conversions: 19,
-    impressions: 81660,
-    frequency: 4.2,
-  },
-  {
-    id: 'cmp_4',
-    name: 'Holiday Promo - Video Reels',
-    status: 'active',
-    healthStatus: 'Learning',
-    spend: 620.0,
-    clicks: 1450,
-    ctr: 2.1,
-    cpc: 0.42,
-    roas: 2.9,
-    conversions: 54,
-    impressions: 69040,
-    frequency: 1.4,
-  },
-  {
-    id: 'cmp_5',
-    name: 'VIP Customer Retention',
-    status: 'active',
-    healthStatus: 'Profitable',
-    spend: 1150.0,
-    clicks: 2800,
-    ctr: 3.1,
-    cpc: 0.41,
-    roas: 4.2,
-    conversions: 110,
-    impressions: 90320,
-    frequency: 2.3,
-  },
-];
+interface CampaignApiResponse {
+  success: boolean;
+  data: {
+    campaigns: CampaignData[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      pages: number;
+    };
+    range: string;
+    access?: {
+      isPro: boolean;
+      visible: number;
+      total: number;
+      hidden: number;
+    };
+  };
+}
+
+interface SummaryApiResponse {
+  success: boolean;
+  data: {
+    totalActiveCampaigns: number;
+    totalSpend: number;
+    averageRoas: number;
+    needsAttention: number;
+    fatigued: number;
+  };
+}
+
+interface MeResponse {
+  success: boolean;
+  data: {
+    id: string;
+    name: string;
+    email: string;
+    plan: 'FREE' | 'PRO';
+    isMetaConnected?: boolean;
+  };
+}
+
+interface CheckoutResponse {
+  success?: boolean;
+  checkoutUrl?: string;
+  url?: string;
+  message?: string;
+}
 
 export default function CampaignsPage() {
   const router = useRouter();
+
+  // ============================================================
+  // USER
+  // ============================================================
+
   const [userTier, setUserTier] = useState<UserTier>('free');
+  const [userLoading, setUserLoading] = useState(true);
+
+  // ============================================================
+  // CAMPAIGNS
+  // ============================================================
+
+  const [campaigns, setCampaigns] = useState<CampaignData[]>([]);
+  const [campaignLoading, setCampaignLoading] = useState(true);
+
+  // ============================================================
+  // FILTERS
+  // ============================================================
+
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [healthFilter, setHealthFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [healthFilter, setHealthFilter] = useState('all');
 
-  const isPro = userTier === 'pro';
-  const MAX_FREE_VISIBLE = 3;
+  // ============================================================
+  // PAGINATION
+  // ============================================================
 
-  const handleViewInsights = (campaignId: string) => {
-    router.push(`/dashboard/insights?id=${campaignId}`);
-  };
+  const [page, setPage] = useState(1);
 
-  const filteredCampaigns = MOCK_CAMPAIGNS.filter((campaign) => {
-    const matchesSearch = campaign.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || campaign.status === statusFilter;
-    const matchesHealth = healthFilter === 'all' || campaign.healthStatus === healthFilter;
-    return matchesSearch && matchesStatus && matchesHealth;
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 20,
+    total: 0,
+    pages: 0,
   });
 
-  const visibleCampaigns = isPro ? filteredCampaigns : filteredCampaigns.slice(0, MAX_FREE_VISIBLE);
-  const hiddenCount = filteredCampaigns.length - MAX_FREE_VISIBLE;
+  // ============================================================
+  // SUMMARY
+  // ============================================================
 
-  const activeCount = MOCK_CAMPAIGNS.filter((c) => c.status === 'active').length;
-  const totalSpend = MOCK_CAMPAIGNS.reduce((acc, curr) => acc + curr.spend, 0);
-  const avgRoas = (
-    MOCK_CAMPAIGNS.reduce((acc, curr) => acc + curr.roas, 0) / MOCK_CAMPAIGNS.length
-  ).toFixed(1);
-  const fatiguedCount = MOCK_CAMPAIGNS.filter((c) => c.healthStatus === 'Fatigued').length;
+  const [summary, setSummary] = useState({
+    totalActiveCampaigns: 0,
+    totalSpend: 0,
+    averageRoas: 0,
+    fatigued: 0,
+    needsAttention: 0,
+  });
+
+  // ============================================================
+  // UPGRADE
+  // ============================================================
+
+  const [upgradeLoading, setUpgradeLoading] = useState(false);
+
+  // ============================================================
+  // DERIVED VALUES
+  // ============================================================
+
+  const isPro = userTier === 'pro';
+
+  const hiddenCount = useMemo(() => {
+    if (isPro) return 0;
+
+    return Math.max(
+      pagination.total - campaigns.length,
+      0
+    );
+  }, [isPro, pagination.total, campaigns.length]);
+
+  // ============================================================
+  // LOAD CURRENT USER
+  // ============================================================
+
+  const loadCurrentUser = useCallback(async () => {
+    try {
+      setUserLoading(true);
+
+      const response = await apiClient.get<MeResponse>(
+        '/auth/me'
+      );
+
+      const plan = response.data?.data?.plan;
+
+      setUserTier(
+        plan === 'PRO'
+          ? 'pro'
+          : 'free'
+      );
+    } catch (error: any) {
+      console.error(
+        'Failed to load current user:',
+        error?.response?.data || error
+      );
+
+      setUserTier('free');
+    } finally {
+      setUserLoading(false);
+    }
+  }, []);
+
+  // ============================================================
+  // LOAD CAMPAIGNS
+  // ============================================================
+
+  const loadCampaigns = useCallback(async () => {
+    try {
+      setCampaignLoading(true);
+
+      const response =
+        await apiClient.get<CampaignApiResponse>(
+          '/dashboard/campaigns',
+          {
+            params: {
+              search: searchQuery || undefined,
+              status:
+                statusFilter !== 'all'
+                  ? statusFilter
+                  : undefined,
+              health:
+                healthFilter !== 'all'
+                  ? healthFilter
+                  : undefined,
+              range: '7d',
+              page,
+              limit: 20,
+            },
+          }
+        );
+
+      if (response.data?.success) {
+        setCampaigns(
+          response.data.data.campaigns || []
+        );
+
+        setPagination(
+          response.data.data.pagination
+        );
+
+
+        if (response.data.data.access) {
+          setUserTier(
+            response.data.data.access.isPro
+              ? 'pro'
+              : 'free'
+          );
+        }
+      }
+    } catch (error: any) {
+      console.error(
+        'Failed to load campaigns:',
+        error?.response?.data || error
+      );
+
+      setCampaigns([]);
+    } finally {
+      setCampaignLoading(false);
+    }
+  }, [
+    searchQuery,
+    statusFilter,
+    healthFilter,
+    page,
+  ]);
+
+  // ============================================================
+  // LOAD SUMMARY
+  // ============================================================
+
+  const loadSummary = useCallback(async () => {
+    try {
+      const response =
+        await apiClient.get<SummaryApiResponse>(
+          '/dashboard/campaigns/summary'
+        );
+
+      if (response.data?.success) {
+        setSummary(response.data.data);
+      }
+    } catch (error: any) {
+      console.error(
+        'Failed to load campaign summary:',
+        error?.response?.data || error
+      );
+    }
+  }, []);
+
+  // ============================================================
+  // INITIAL LOAD
+  // ============================================================
+
+  useEffect(() => {
+    loadCurrentUser();
+    loadSummary();
+  }, [
+    loadCurrentUser,
+    loadSummary,
+  ]);
+
+  // ============================================================
+  // LOAD CAMPAIGNS WHEN FILTERS CHANGE
+  // ============================================================
+
+  useEffect(() => {
+    loadCampaigns();
+  }, [loadCampaigns]);
+
+  // ============================================================
+  // RESET PAGE WHEN FILTER CHANGES
+  // ============================================================
+
+  useEffect(() => {
+    setPage(1);
+  }, [
+    searchQuery,
+    statusFilter,
+    healthFilter,
+  ]);
+
+  // ============================================================
+  // VIEW AI INSIGHTS
+  // ============================================================
+
+  const handleViewInsights = async (
+    campaignId: string
+  ) => {
+
+    if (!isPro) {
+      await handleUpgrade();
+      return;
+    }
+
+    try {
+
+      await apiClient.get(
+        `/dashboard/campaigns/${campaignId}/ai-insights`
+      );
+
+      router.push(
+        `/dashboard/insights?id=${encodeURIComponent(
+          campaignId
+        )}`
+      );
+    } catch (error: any) {
+      const status =
+        error?.response?.status;
+
+      const code =
+        error?.response?.data?.code;
+
+      if (
+        status === 403 ||
+        code === 'PRO_REQUIRED'
+      ) {
+        await handleUpgrade();
+        return;
+      }
+
+      console.error(
+        'Failed to load AI insights:',
+        error?.response?.data || error
+      );
+
+      alert(
+        error?.response?.data?.message ||
+          'Unable to load AI insights.'
+      );
+    }
+  };
+
+  // ============================================================
+  // STRIPE UPGRADE
+  // ============================================================
+
+  const handleUpgrade = async () => {
+    if (upgradeLoading) return;
+
+    try {
+      setUpgradeLoading(true);
+      const response =
+        await apiClient.post<CheckoutResponse>(
+          '/subscriptions/checkout'
+        );
+
+      const checkoutUrl =
+        response.data?.checkoutUrl ||
+        response.data?.url;
+
+      if (!checkoutUrl) {
+        throw new Error(
+          'Stripe checkout URL was not returned.'
+        );
+      }
+
+      window.location.href = checkoutUrl;
+    } catch (error: any) {
+      console.error(
+        'Upgrade failed:',
+        error?.response?.data || error
+      );
+
+      alert(
+        error?.response?.data?.message ||
+          error?.response?.data?.error ||
+          error?.message ||
+          'Unable to start Pro upgrade.'
+      );
+
+      setUpgradeLoading(false);
+    }
+  };
+
+  // ============================================================
+  // LOADING STATE
+  // ============================================================
+
+  if (userLoading) {
+    return (
+      <div className="flex min-h-[400px] w-full items-center justify-center">
+        <div
+          style={{
+            color: 'var(--text-primary)',
+          }}
+          className="text-sm opacity-60"
+        >
+          Loading campaigns...
+        </div>
+      </div>
+    );
+  }
+
+  // ============================================================
+  // UI
+  // ============================================================
 
   return (
     <div className="w-full space-y-6 bg-transparent p-4 md:p-6">
+      {/* ======================================================
+          HEADER
+      ======================================================= */}
+
       <CampaignHeader
         userTier={userTier}
-        onToggleTier={() => setUserTier(isPro ? 'free' : 'pro')}
+        // onToggleTier={handleUpgrade}
       />
 
+      {/* ======================================================
+          METRICS
+      ======================================================= */}
+
       <CampaignMetrics
-        activeCount={activeCount}
-        totalSpend={totalSpend}
-        avgRoas={avgRoas}
-        fatiguedCount={fatiguedCount}
+        activeCount={
+          summary.totalActiveCampaigns
+        }
+        totalSpend={
+          summary.totalSpend
+        }
+        avgRoas={
+          summary.averageRoas.toFixed(1)
+        }
+        fatiguedCount={
+          summary.fatigued
+        }
         isPro={isPro}
       />
 
+      {/* ======================================================
+          FILTERS
+      ======================================================= */}
+
       <CampaignFilters
         searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
+        onSearchChange={(value) => {
+          setSearchQuery(value);
+        }}
         statusFilter={statusFilter}
-        onStatusChange={setStatusFilter}
+        onStatusChange={(value) => {
+          setStatusFilter(value);
+        }}
         healthFilter={healthFilter}
-        onHealthChange={setHealthFilter}
+        onHealthChange={(value) => {
+          setHealthFilter(value);
+        }}
       />
 
+      {/* ======================================================
+          CAMPAIGN TABLE
+      ======================================================= */}
+
       <div
-        style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--border-color)' }}
+        style={{
+          backgroundColor: 'var(--card-bg)',
+          borderColor: 'var(--border-color)',
+        }}
         className="relative overflow-hidden rounded-xl border shadow-sm"
       >
-        <CampaignTable
-          campaigns={visibleCampaigns}
-          isPro={isPro}
-          onViewInsights={handleViewInsights}
-          onUnlockPro={() => setUserTier('pro')}
-        />
+        {campaignLoading ? (
+          <div
+            style={{
+              color: 'var(--text-primary)',
+            }}
+            className="p-12 text-center text-sm opacity-60"
+          >
+            Loading campaigns...
+          </div>
+        ) : (
+          <CampaignTable
+            campaigns={campaigns}
+            isPro={isPro}
+            onViewInsights={
+              handleViewInsights
+            }
+            onUnlockPro={
+              handleUpgrade
+            }
+          />
+        )}
+
+        {/* ====================================================
+            PRO BANNER
+        ===================================================== */}
 
         {!isPro && hiddenCount > 0 && (
           <ProUpgradeBanner
             hiddenCount={hiddenCount}
-            onUpgrade={() => setUserTier('pro')}
+            onUpgrade={handleUpgrade}
           />
         )}
       </div>
+
+      {/* ======================================================
+          PAGINATION
+      ======================================================= */}
+
+      {isPro &&
+        pagination.pages > 1 && (
+          <div className="flex items-center justify-center gap-4">
+            <button
+              type="button"
+              disabled={
+                page <= 1 ||
+                campaignLoading
+              }
+              onClick={() =>
+                setPage((current) =>
+                  Math.max(current - 1, 1)
+                )
+              }
+              className="rounded-lg border border-white/10 px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Previous
+            </button>
+
+            <span
+              style={{
+                color:
+                  'var(--text-primary)',
+              }}
+              className="text-xs opacity-70"
+            >
+              Page {pagination.page} of{' '}
+              {pagination.pages}
+            </span>
+
+            <button
+              type="button"
+              disabled={
+                page >= pagination.pages ||
+                campaignLoading
+              }
+              onClick={() =>
+                setPage((current) =>
+                  Math.min(
+                    current + 1,
+                    pagination.pages
+                  )
+                )
+              }
+              className="rounded-lg border border-white/10 px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Next
+            </button>
+          </div>
+        )}
     </div>
   );
 }
+
