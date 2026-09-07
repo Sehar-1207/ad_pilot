@@ -1,7 +1,8 @@
+
 import { MoreVertical } from 'lucide-react';
 
 export interface AdminUser {
-  id: number;
+  id: string;
   name: string;
   email: string;
   plan: 'Pro' | 'Free' | string;
@@ -18,13 +19,14 @@ export default function UserTableRow({ user }: UserTableRowProps) {
   return (
     <tr className="hover:bg-[var(--bg-accent)] transition-colors">
       <td className="px-6 py-4">
-        <div 
+        <div
           style={{ color: 'var(--text-primary)' }}
           className="font-bold text-xs sm:text-sm"
         >
           {user.name}
         </div>
-        <div 
+
+        <div
           style={{ color: 'var(--text-secondary)' }}
           className="text-xs font-medium mt-0.5"
         >
@@ -54,20 +56,25 @@ export default function UserTableRow({ user }: UserTableRowProps) {
       </td>
 
       <td className="px-6 py-4">
-        <span 
+        <span
           style={{ color: 'var(--text-primary)' }}
           className="flex items-center gap-2 text-xs font-medium"
         >
           <span
             className={`w-2 h-2 rounded-full shrink-0 ${
-              user.status === 'Active' ? 'bg-emerald-500' : 'bg-amber-500'
+              user.status === 'Active'
+                ? 'bg-emerald-500'
+                : 'bg-amber-500'
             }`}
           />
-          {user.adAccounts > 0 ? `${user.adAccounts} Ad Accounts` : 'Not Connected'}
+
+          {user.adAccounts > 0
+            ? `${user.adAccounts} Ad Accounts`
+            : 'Not Connected'}
         </span>
       </td>
 
-      <td 
+      <td
         style={{ color: 'var(--text-primary)' }}
         className="px-6 py-4 font-mono font-bold text-xs"
       >
@@ -75,10 +82,11 @@ export default function UserTableRow({ user }: UserTableRowProps) {
       </td>
 
       <td className="px-6 py-4 text-right">
-        <button 
+        <button
+          type="button"
           style={{ color: 'var(--text-primary)' }}
           className="p-1.5 rounded-lg hover:bg-[var(--bg-accent)] transition-colors opacity-80 hover:opacity-100"
-          aria-label="User actions"
+          aria-label={`Actions for ${user.name}`}
         >
           <MoreVertical className="w-4 h-4" />
         </button>

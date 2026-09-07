@@ -25,11 +25,13 @@ export default function UserFilters({
       }}
       className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 border rounded-xl transition-colors"
     >
+      {/* Search */}
       <div className="relative flex-1 max-w-md">
         <Search
           style={{ color: 'var(--text-primary)' }}
           className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 opacity-50"
         />
+
         <input
           type="text"
           value={searchQuery}
@@ -44,13 +46,16 @@ export default function UserFilters({
         />
       </div>
 
+      {/* Plan Filter */}
       <div className="flex items-center gap-2">
         <span
           style={{ color: 'var(--text-primary)' }}
           className="text-xs font-medium flex items-center gap-1.5 mr-1 hidden md:flex opacity-70"
         >
-          <Filter className="w-3.5 h-3.5" /> Filter Plan:
+          <Filter className="w-3.5 h-3.5" />
+          Filter Plan:
         </span>
+
         <div
           style={{
             backgroundColor: 'var(--bg-primary)',
@@ -60,9 +65,11 @@ export default function UserFilters({
         >
           {plans.map((plan) => {
             const isSelected = selectedPlan === plan;
+
             return (
               <button
                 key={plan}
+                type="button"
                 onClick={() => onPlanChange(plan)}
                 style={
                   isSelected
@@ -75,7 +82,9 @@ export default function UserFilters({
                       }
                 }
                 className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${
-                  !isSelected ? 'opacity-70 hover:opacity-100 hover:bg-[var(--bg-accent)]' : 'shadow-sm'
+                  !isSelected
+                    ? 'opacity-70 hover:opacity-100 hover:bg-[var(--bg-accent)]'
+                    : 'shadow-sm'
                 }`}
               >
                 {plan}

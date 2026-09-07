@@ -1,3 +1,4 @@
+
 import { Users, UserCheck, Zap, ShieldAlert } from 'lucide-react';
 
 interface UserMetricsProps {
@@ -14,19 +15,40 @@ export default function UserMetrics({
   pendingSync,
 }: UserMetricsProps) {
   const metrics = [
-    { label: 'Total Accounts', value: totalUsers, icon: Users, iconClass: 'text-slate-500 dark:text-slate-400' },
-    { label: 'Pro Tier Subscribers', value: proUsers, icon: Zap, iconClass: 'text-blue-600 dark:text-blue-400' },
-    { label: 'Free Tier Users', value: freeUsers, icon: UserCheck, iconClass: 'text-emerald-600 dark:text-emerald-400' },
-    { label: 'Pending Meta Sync', value: pendingSync, icon: ShieldAlert, iconClass: 'text-amber-600 dark:text-amber-400' },
+    {
+      label: 'Total Accounts',
+      value: totalUsers,
+      icon: Users,
+      iconClass: 'text-slate-500 dark:text-slate-400',
+    },
+    {
+      label: 'Pro Tier Subscribers',
+      value: proUsers,
+      icon: Zap,
+      iconClass: 'text-blue-600 dark:text-blue-400',
+    },
+    {
+      label: 'Free Tier Users',
+      value: freeUsers,
+      icon: UserCheck,
+      iconClass: 'text-emerald-600 dark:text-emerald-400',
+    },
+    {
+      label: 'Pending Meta Sync',
+      value: pendingSync,
+      icon: ShieldAlert,
+      iconClass: 'text-amber-600 dark:text-amber-400',
+    },
   ];
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      {metrics.map((m, idx) => {
-        const Icon = m.icon;
+      {metrics.map((metric) => {
+        const Icon = metric.icon;
+
         return (
           <div
-            key={idx}
+            key={metric.label}
             style={{
               backgroundColor: 'var(--bg-surface)',
               borderColor: 'var(--border-color)',
@@ -38,15 +60,17 @@ export default function UserMetrics({
                 style={{ color: 'var(--text-primary)' }}
                 className="text-xs font-bold uppercase tracking-wider opacity-70"
               >
-                {m.label}
+                {metric.label}
               </span>
-              <Icon className={`w-4 h-4 ${m.iconClass}`} />
+
+              <Icon className={`w-4 h-4 ${metric.iconClass}`} />
             </div>
+
             <div
               style={{ color: 'var(--text-primary)' }}
               className="text-2xl font-bold tracking-tight"
             >
-              {m.value}
+              {metric.value}
             </div>
           </div>
         );

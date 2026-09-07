@@ -7,7 +7,7 @@ export interface UserAccount {
   name: string;
   email: string;
   plan: 'Pro' | 'Free';
-  status: 'Active' | 'Pending Sync' | 'Suspended';
+  status: 'Active' | 'Pending Sync';
   joinedDate: string;
   adAccountsConnected: number;
   monthlySpend: string;
@@ -17,10 +17,12 @@ export interface UserAccount {
 interface UsersTableProps {
   users: UserAccount[];
   onUpdatePlan: (userId: string) => void;
-  onToggleBan: (userId: string) => void;
 }
 
-export default function UsersTable({ users, onUpdatePlan, onToggleBan }: UsersTableProps) {
+export default function UsersTable({
+  users,
+  onUpdatePlan,
+}: UsersTableProps) {
   return (
     <div
       style={{
@@ -49,22 +51,27 @@ export default function UsersTable({ users, onUpdatePlan, onToggleBan }: UsersTa
               <th className="px-6 py-3.5 text-right">Actions</th>
             </tr>
           </thead>
+
           <tbody
             style={{ color: 'var(--text-primary)' }}
             className="divide-y divide-[var(--border-color)]"
           >
             {users.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-12 text-center opacity-50">
+                <td
+                  colSpan={7}
+                  className="px-6 py-12 text-center opacity-50"
+                >
                   No users matched your filter criteria.
                 </td>
               </tr>
             ) : (
-              users.map((u) => (
+              users.map((user) => (
                 <tr
-                  key={u.id}
+                  key={user.id}
                   className="hover:bg-[var(--bg-accent)] transition-colors"
                 >
+                  {/* User Details */}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div
@@ -75,80 +82,92 @@ export default function UsersTable({ users, onUpdatePlan, onToggleBan }: UsersTa
                         }}
                         className="w-8 h-8 rounded-full border font-bold flex items-center justify-center shrink-0"
                       >
-                        {u.name.slice(0, 2).toUpperCase()}
+                        {user.name.slice(0, 2).toUpperCase()}
                       </div>
+
                       <div>
-                        <div className="font-semibold flex items-center gap-2">
-                          {u.name}
-                          {u.status === 'Suspended' && (
-                            <span className="text-[10px] bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded font-mono">
-                              Suspended
-                            </span>
-                          )}
+                        <div className="font-semibold">
+                          {user.name}
                         </div>
-                        <div className="opacity-60 text-[11px]">{u.email}</div>
+
+                        <div className="opacity-60 text-[11px]">
+                          {user.email}
+                        </div>
                       </div>
                     </div>
                   </td>
 
+                  {/* Subscription Plan */}
                   <td className="px-6 py-4">
                     <span
                       style={
-                        u.plan === 'Pro'
+                        user.plan === 'Pro'
                           ? {
-                              backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                              borderColor: 'rgba(59, 130, 246, 0.3)',
+                              backgroundColor:
+                                'rgba(59, 130, 246, 0.1)',
+                              borderColor:
+                                'rgba(59, 130, 246, 0.3)',
                             }
                           : {
-                              backgroundColor: 'var(--bg-primary)',
-                              borderColor: 'var(--border-color)',
+                              backgroundColor:
+                                'var(--bg-primary)',
+                              borderColor:
+                                'var(--border-color)',
                             }
                       }
                       className={`inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-semibold tracking-wide border ${
-                        u.plan === 'Pro'
+                        user.plan === 'Pro'
                           ? 'text-blue-600 dark:text-blue-400'
                           : 'opacity-70'
                       }`}
                     >
-                      {u.plan} Tier
+                      {user.plan} Tier
                     </span>
                   </td>
 
+                  {/* Meta Ads Integration */}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <span
                         className={`w-2 h-2 rounded-full ${
-                          u.status === 'Active'
+                          user.status === 'Active'
                             ? 'bg-emerald-500'
-                            : u.status === 'Pending Sync'
-                            ? 'bg-amber-500'
-                            : 'bg-rose-500'
+                            : 'bg-amber-500'
                         }`}
                       />
+
                       <span>
-                        {u.adAccountsConnected > 0
-                          ? `${u.adAccountsConnected} Meta ${
-                              u.adAccountsConnected === 1 ? 'Account' : 'Accounts'
+                        {user.adAccountsConnected > 0
+                          ? `${user.adAccountsConnected} Meta ${
+                              user.adAccountsConnected === 1
+                                ? 'Account'
+                                : 'Accounts'
                             }`
                           : 'Not Connected'}
                       </span>
                     </div>
                   </td>
 
-                  <td className="px-6 py-4 font-mono font-medium">{u.monthlySpend}</td>
-
-                  <td className="px-6 py-4 font-mono opacity-70">
-                    {u.geminiRequests.toLocaleString()} reqs
+                  {/* Monthly Spend */}
+                  <td className="px-6 py-4 font-mono font-medium">
+                    {user.monthlySpend}
                   </td>
 
-                  <td className="px-6 py-4 opacity-70">{u.joinedDate}</td>
+                  {/* Gemini Requests */}
+                  <td className="px-6 py-4 font-mono opacity-70">
+                    {user.geminiRequests.toLocaleString()} reqs
+                  </td>
 
+                  {/* Joined Date */}
+                  <td className="px-6 py-4 opacity-70">
+                    {user.joinedDate}
+                  </td>
+
+                  {/* Actions */}
                   <td className="px-6 py-4 text-right">
                     <UserActionsDropdown
-                      currentPlan={u.plan}
-                      isBanned={u.status === 'Suspended'}
-                      onTogglePlan={() => onUpdatePlan(u.id)}
-                      onToggleBan={() => onToggleBan(u.id)}
+                      currentPlan={user.plan}
+                      onTogglePlan={() => onUpdatePlan(user.id)}
                     />
                   </td>
                 </tr>

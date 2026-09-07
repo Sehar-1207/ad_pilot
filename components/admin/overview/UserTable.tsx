@@ -1,11 +1,18 @@
+
 import UserSearchInput from './UserSearchInput';
 import UserTableRow, { AdminUser } from './UserTableRow';
 
 interface UsersTableProps {
   users: AdminUser[];
+  searchQuery: string;
+  onSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-export default function UsersTable({ users }: UsersTableProps) {
+export default function UsersTable({
+  users,
+  searchQuery,
+  onSearchChange,
+}: UsersTableProps) {
   return (
     <div
       style={{
@@ -25,6 +32,7 @@ export default function UsersTable({ users }: UsersTableProps) {
           >
             Recent Registrations
           </h2>
+
           <p
             style={{ color: 'var(--text-primary)' }}
             className="text-xs mt-0.5 opacity-80 font-normal"
@@ -32,7 +40,11 @@ export default function UsersTable({ users }: UsersTableProps) {
             Manage access levels and inspect user syncing status.
           </p>
         </div>
-        <UserSearchInput />
+
+        <UserSearchInput
+          value={searchQuery}
+          onChange={onSearchChange}
+        />
       </div>
 
       <div className="overflow-x-auto">
@@ -53,12 +65,16 @@ export default function UsersTable({ users }: UsersTableProps) {
               <th className="px-6 py-3.5 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody 
-            style={{ color: 'var(--text-primary)' }} 
+
+          <tbody
+            style={{ color: 'var(--text-primary)' }}
             className="divide-y divide-[var(--border-color)] font-medium"
           >
             {users.map((user) => (
-              <UserTableRow key={user.id} user={user} />
+              <UserTableRow
+                key={user.id}
+                user={user}
+              />
             ))}
           </tbody>
         </table>
@@ -66,3 +82,4 @@ export default function UsersTable({ users }: UsersTableProps) {
     </div>
   );
 }
+

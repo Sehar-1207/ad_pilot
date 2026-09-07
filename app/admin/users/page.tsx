@@ -1,112 +1,243 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+
 import UserMetrics from '@/components/admin/users/UserMetrics';
 import UserFilters from '@/components/admin/users/UserFilter';
-import UsersTable, { UserAccount } from '@/components/admin/users/UserTable';
+import UsersTable, {
+  UserAccount,
+} from '@/components/admin/users/UserTable';
 
-const INITIAL_USERS: UserAccount[] = [
-  {
-    id: 'usr_1',
-    name: 'Sehar Ajmal',
-    email: 'seharajmal452@gmail.com',
-    plan: 'Pro',
-    status: 'Active',
-    joinedDate: 'May 12, 2026',
-    adAccountsConnected: 4,
-    monthlySpend: '$24,500.00',
-    geminiRequests: 1420,
-  },
-  {
-    id: 'usr_2',
-    name: 'Alex Johnson',
-    email: 'alex@growthagency.io',
-    plan: 'Pro',
-    status: 'Active',
-    joinedDate: 'Jun 02, 2026',
-    adAccountsConnected: 2,
-    monthlySpend: '$12,400.00',
-    geminiRequests: 890,
-  },
-  {
-    id: 'usr_3',
-    name: 'Sarah Miller',
-    email: 'sarah@ecombrands.com',
-    plan: 'Free',
-    status: 'Active',
-    joinedDate: 'Jun 18, 2026',
-    adAccountsConnected: 1,
-    monthlySpend: '$1,200.00',
-    geminiRequests: 45,
-  },
-  {
-    id: 'usr_4',
-    name: 'Emma Wilson',
-    email: 'emma@wilsonstudio.com',
-    plan: 'Free',
-    status: 'Pending Sync',
-    joinedDate: 'Jul 01, 2026',
-    adAccountsConnected: 0,
-    monthlySpend: '$0.00',
-    geminiRequests: 12,
-  },
-];
+import { getAdminUsers, updateAdminUser } from '@/api/admin';
+
+interface AdminUsersResponse {
+  success: boolean;
+  data: {
+    users: any[];
+    statistics: {
+      totalUsers: number;
+      proUsers: number;
+      freeUsers: number;
+      pendingSync: number;
+    };
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  };
+  error?: string;
+}
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<UserAccount[]>(INITIAL_USERS);
+  const [users, setUsers] = useState<UserAccount[]>([]);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPlan, setSelectedPlan] = useState('All');
 
-  const handleUpdatePlan = (userId: string) => {
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === userId ? { ...u, plan: u.plan === 'Pro' ? 'Free' : 'Pro' } : u
-      )
-    );
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [proUsers, setProUsers] = useState(0);
+  const [freeUsers, setFreeUsers] = useState(0);
+  const [pendingSync, setPendingSync] = useState(0);
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const LIMIT = 10;
+
+  const loadUsers = async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const response: AdminUsersResponse = await getAdminUsers({
+        page,
+        limit: LIMIT,
+        search: searchQuery.trim() || undefined,
+      });
+
+      if (!response?.success) {
+        throw new Error(
+          response?.error || 'Failed to load users'
+        );
+      }
+
+      const backendUsers = response.data?.users || [];
+
+      const filteredUsers =
+        selectedPlan === 'All'
+          ? backendUsers
+          : backendUsers.filter(
+              (user: any) =>
+                user.plan === selectedPlan.toUpperCase()
+            );
+
+      const mappedUsers: UserAccount[] = filteredUsers.map(
+        (user: any) => ({
+          id: user._id || user.id,
+
+          name: user.name || 'Unknown User',
+
+          email: user.email || '-',
+
+          plan:
+            user.plan === 'PRO'
+              ? 'Pro'
+              : 'Free',
+
+          status: user.isMetaConnected
+            ? 'Active'
+            : 'Pending Sync',
+
+          joinedDate: user.createdAt
+            ? new Date(user.createdAt).toLocaleDateString(
+                'en-US',
+                {
+                  month: 'short',
+                  day: '2-digit',
+                  year: 'numeric',
+                }
+              )
+            : '-',
+
+          adAccountsConnected:
+            user.metaAdAccountId ? 1 : 0,
+
+          monthlySpend: '$0.00',
+
+          geminiRequests: 0,
+        })
+      );
+
+      setUsers(mappedUsers);
+
+      setTotalPages(
+        response.data?.pagination?.totalPages || 1
+      );
+
+      setTotalUsers(
+        response.data?.statistics?.totalUsers || 0
+      );
+
+      setProUsers(
+        response.data?.statistics?.proUsers || 0
+      );
+
+      setFreeUsers(
+        response.data?.statistics?.freeUsers || 0
+      );
+
+      setPendingSync(
+        response.data?.statistics?.pendingSync || 0
+      );
+    } catch (err: any) {
+      console.error('Failed to load admin users:', err);
+
+      setError(
+        err?.response?.data?.error ||
+          err?.message ||
+          'Failed to load users'
+      );
+
+      setUsers([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleToggleBan = (userId: string) => {
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === userId
-          ? { ...u, status: u.status === 'Suspended' ? 'Active' : 'Suspended' }
-          : u
-      )
-    );
+  useEffect(() => {
+    loadUsers();
+  }, [page, searchQuery, selectedPlan]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, selectedPlan]);
+
+  const handleUpdatePlan = async (userId: string) => {
+    try {
+      setError('');
+
+      const user = users.find(
+        (currentUser) => currentUser.id === userId
+      );
+
+      if (!user) {
+        return;
+      }
+
+      const newPlan =
+        user.plan === 'Pro'
+          ? 'FREE'
+          : 'PRO';
+
+      await updateAdminUser(userId, {
+        plan: newPlan,
+      });
+
+      await loadUsers();
+    } catch (err: any) {
+      console.error('Failed to update user plan:', err);
+
+      setError(
+        err?.response?.data?.error ||
+          err?.message ||
+          'Failed to update user plan'
+      );
+    }
   };
-
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesPlan =
-      selectedPlan === 'All' || user.plan === selectedPlan;
-
-    return matchesSearch && matchesPlan;
-  });
-
-  const totalUsers = users.length;
-  const proUsers = users.filter((u) => u.plan === 'Pro').length;
-  const freeUsers = users.filter((u) => u.plan === 'Free').length;
-  const pendingSync = users.filter((u) => u.status === 'Pending Sync').length;
 
   return (
-    <div className="space-y-8">
+    <div
+      style={{
+        color: 'var(--text-primary)',
+      }}
+      className="space-y-8"
+    >
+      {/* Header */}
       <div>
         <h1
-          style={{ color: 'var(--text-primary)' }}
+          style={{
+            color: 'var(--text-primary)',
+          }}
           className="text-2xl font-bold tracking-tight"
         >
           User & Plan Management
         </h1>
+
         <p
-          style={{ color: 'var(--text-primary)' }}
+          style={{
+            color: 'var(--text-primary)',
+          }}
           className="text-sm mt-1 opacity-70"
         >
-          Inspect registered Ad Pilot users, connected Meta accounts, and subscription tiers.
+          Inspect registered Ad Pilot users,
+          connected Meta accounts, and subscription
+          tiers.
         </p>
       </div>
 
+      {/* Error */}
+      {error && (
+        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3">
+          <p className="text-sm text-red-500">
+            {error}
+          </p>
+
+          <button
+            type="button"
+            onClick={loadUsers}
+            className="mt-2 text-sm font-medium underline"
+          >
+            Try again
+          </button>
+        </div>
+      )}
+
+      {/* Metrics */}
       <UserMetrics
         totalUsers={totalUsers}
         proUsers={proUsers}
@@ -114,17 +245,78 @@ export default function AdminUsersPage() {
         pendingSync={pendingSync}
       />
 
+      {/* Filters */}
       <UserFilters
         searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
+        onSearchChange={(value) => {
+          setSearchQuery(value);
+          setPage(1);
+        }}
         selectedPlan={selectedPlan}
-        onPlanChange={setSelectedPlan}
+        onPlanChange={(value) => {
+          setSelectedPlan(value);
+          setPage(1);
+        }}
       />
-      <UsersTable
-        users={filteredUsers}
-        onUpdatePlan={handleUpdatePlan}
-        onToggleBan={handleToggleBan}
-      />
+
+      {/* Users */}
+      {loading ? (
+        <div
+          className="flex items-center justify-center py-20"
+          style={{
+            color: 'var(--text-primary)',
+          }}
+        >
+          <p className="text-sm opacity-70">
+            Loading users...
+          </p>
+        </div>
+      ) : (
+        <>
+          <UsersTable
+            users={users}
+            onUpdatePlan={handleUpdatePlan}
+          />
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-4">
+              <button
+                type="button"
+                disabled={page <= 1}
+                onClick={() =>
+                  setPage((current) =>
+                    Math.max(1, current - 1)
+                  )
+                }
+                className="rounded-lg border px-4 py-2 text-sm disabled:opacity-40"
+              >
+                Previous
+              </button>
+
+              <span className="text-sm opacity-70">
+                Page {page} of {totalPages}
+              </span>
+
+              <button
+                type="button"
+                disabled={page >= totalPages}
+                onClick={() =>
+                  setPage((current) =>
+                    Math.min(
+                      totalPages,
+                      current + 1
+                    )
+                  )
+                }
+                className="rounded-lg border px-4 py-2 text-sm disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

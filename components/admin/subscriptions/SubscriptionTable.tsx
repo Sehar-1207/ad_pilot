@@ -8,7 +8,7 @@ export interface SubscriptionRecord {
   email: string;
   planName: string;
   amount: string;
-  billingCycle: 'Monthly' | 'Annual';
+  billingCycle: 'Monthly';
   status: 'Active' | 'Past Due' | 'Canceled';
   nextBillingDate: string;
   stripeCustomerId: string;
@@ -16,14 +16,10 @@ export interface SubscriptionRecord {
 
 interface SubscriptionsTableProps {
   subscriptions: SubscriptionRecord[];
-  onCancelSub: (id: string) => void;
-  onRetryPayment: (id: string) => void;
 }
 
 export default function SubscriptionsTable({
   subscriptions,
-  onCancelSub,
-  onRetryPayment,
 }: SubscriptionsTableProps) {
   return (
     <div
@@ -31,104 +27,201 @@ export default function SubscriptionsTable({
         backgroundColor: 'var(--bg-surface)',
         borderColor: 'var(--border-color)',
       }}
-      className="border rounded-xl overflow-hidden transition-colors shadow-sm"
+      className="border rounded-xl overflow-hidden shadow-sm transition-colors"
     >
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-xs">
-          <thead
-            style={{
-              backgroundColor: 'var(--bg-primary)',
-              borderColor: 'var(--border-color)',
-              color: 'var(--text-primary)',
-            }}
-            className="border-b uppercase tracking-wider font-semibold opacity-70"
-          >
-            <tr>
-              <th className="px-6 py-3.5">Customer</th>
-              <th className="px-6 py-3.5">Plan Tier</th>
-              <th className="px-6 py-3.5">Billing Interval</th>
-              <th className="px-6 py-3.5">Recurring Price</th>
-              <th className="px-6 py-3.5">Status</th>
-              <th className="px-6 py-3.5">Next Renewal</th>
-              <th className="px-6 py-3.5 text-right">Actions</th>
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr
+              style={{
+                backgroundColor: 'var(--bg-accent)',
+                borderColor: 'var(--border-color)',
+              }}
+              className="border-b"
+            >
+              <th
+                style={{ color: 'var(--text-primary)' }}
+                className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider opacity-60 whitespace-nowrap"
+              >
+                Customer
+              </th>
+
+              <th
+                style={{ color: 'var(--text-primary)' }}
+                className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider opacity-60 whitespace-nowrap"
+              >
+                Plan
+              </th>
+
+              <th
+                style={{ color: 'var(--text-primary)' }}
+                className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider opacity-60 whitespace-nowrap"
+              >
+                Amount
+              </th>
+
+              <th
+                style={{ color: 'var(--text-primary)' }}
+                className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider opacity-60 whitespace-nowrap"
+              >
+                Billing Cycle
+              </th>
+
+              <th
+                style={{ color: 'var(--text-primary)' }}
+                className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider opacity-60 whitespace-nowrap"
+              >
+                Status
+              </th>
+
+              <th
+                style={{ color: 'var(--text-primary)' }}
+                className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider opacity-60 whitespace-nowrap"
+              >
+                Next Billing
+              </th>
+
+              <th
+                style={{ color: 'var(--text-primary)' }}
+                className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider opacity-60 text-right"
+              >
+                Actions
+              </th>
             </tr>
           </thead>
-          <tbody
-            style={{ color: 'var(--text-primary)' }}
-            className="divide-y divide-[var(--border-color)]"
-          >
-            {subscriptions.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-6 py-12 text-center opacity-50">
-                  No subscription records found.
-                </td>
-              </tr>
-            ) : (
-              subscriptions.map((sub) => (
-                <tr
-                  key={sub.id}
-                  className="hover:bg-[var(--bg-accent)] transition-colors"
-                >
-                  <td className="px-6 py-4">
-                    <div className="font-semibold">{sub.customerName}</div>
-                    <div className="opacity-60 text-[11px] font-mono">{sub.email}</div>
-                  </td>
 
-                  <td className="px-6 py-4">
-                    <span
+          <tbody>
+            {subscriptions.map((sub) => (
+              <tr
+                key={sub.id}
+                style={{
+                  borderColor: 'var(--border-color)',
+                }}
+                className="border-b last:border-b-0 hover:bg-[var(--bg-accent)] transition-colors"
+              >
+                {/* CUSTOMER */}
+                <td className="px-5 py-4">
+                  <div className="min-w-[180px]">
+                    <div
                       style={{
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        borderColor: 'rgba(59, 130, 246, 0.3)',
+                        color: 'var(--text-primary)',
                       }}
-                      className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border text-blue-600 dark:text-blue-400"
+                      className="text-sm font-semibold"
                     >
-                      {sub.planName}
-                    </span>
-                  </td>
+                      {sub.customerName}
+                    </div>
 
-                  <td className="px-6 py-4 opacity-70">{sub.billingCycle}</td>
+                    <div
+                      style={{
+                        color: 'var(--text-primary)',
+                      }}
+                      className="text-xs opacity-50 mt-0.5"
+                    >
+                      {sub.email}
+                    </div>
+                  </div>
+                </td>
 
-                  <td className="px-6 py-4 font-mono font-medium">{sub.amount}</td>
+                {/* PLAN */}
+                <td className="px-5 py-4">
+                  <span
+                    style={{
+                      color: 'var(--text-primary)',
+                    }}
+                    className="text-xs font-semibold"
+                  >
+                    {sub.planName}
+                  </span>
+                </td>
 
-                  <td className="px-6 py-4">
+                {/* AMOUNT */}
+                <td className="px-5 py-4">
+                  <span
+                    style={{
+                      color: 'var(--text-primary)',
+                    }}
+                    className="text-xs font-semibold whitespace-nowrap"
+                  >
+                    {sub.amount}
+                  </span>
+                </td>
+
+                {/* BILLING CYCLE */}
+                <td className="px-5 py-4">
+                  <span
+                    style={{
+                      color: 'var(--text-primary)',
+                    }}
+                    className="text-xs font-medium"
+                  >
+                    {sub.billingCycle}
+                  </span>
+                </td>
+
+                {/* STATUS */}
+                <td className="px-5 py-4">
+                  <div className="flex items-center gap-2">
                     <span
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold ${
+                      className={`w-2 h-2 rounded-full ${
                         sub.status === 'Active'
-                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                          ? 'bg-emerald-500'
                           : sub.status === 'Past Due'
-                          ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
-                          : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
+                            ? 'bg-amber-500'
+                            : 'bg-red-500'
+                      }`}
+                    />
+
+                    <span
+                      className={`text-xs font-semibold ${
+                        sub.status === 'Active'
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : sub.status === 'Past Due'
+                            ? 'text-amber-600 dark:text-amber-400'
+                            : 'text-red-600 dark:text-red-400'
                       }`}
                     >
-                      <span
-                        className={`w-1.5 h-1.5 rounded-full ${
-                          sub.status === 'Active'
-                            ? 'bg-emerald-500'
-                            : sub.status === 'Past Due'
-                            ? 'bg-amber-500'
-                            : 'bg-rose-500'
-                        }`}
-                      />
                       {sub.status}
                     </span>
-                  </td>
+                  </div>
+                </td>
 
-                  <td className="px-6 py-4 opacity-70">{sub.nextBillingDate}</td>
+                {/* NEXT BILLING */}
+                <td className="px-5 py-4">
+                  <span
+                    style={{
+                      color: 'var(--text-primary)',
+                    }}
+                    className="text-xs font-medium whitespace-nowrap"
+                  >
+                    {sub.nextBillingDate}
+                  </span>
+                </td>
 
-                  <td className="px-6 py-4 text-right">
-                    <SubscriptionActionsDropdown
-                      status={sub.status}
-                      stripeCustomerId={sub.stripeCustomerId}
-                      onCancelSub={() => onCancelSub(sub.id)}
-                      onRetryPayment={() => onRetryPayment(sub.id)}
-                    />
-                  </td>
-                </tr>
-              ))
-            )}
+                {/* ACTIONS */}
+                <td className="px-5 py-4 text-right">
+                  <SubscriptionActionsDropdown
+                    stripeCustomerId={sub.stripeCustomerId}
+                  />
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
+
+      {/* EMPTY STATE */}
+      {subscriptions.length === 0 && (
+        <div className="py-12 text-center">
+          <p
+            style={{
+              color: 'var(--text-primary)',
+            }}
+            className="text-sm opacity-60"
+          >
+            No subscriptions found.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,6 +1,11 @@
 'use client';
 
-import { DollarSign, TrendingUp, RefreshCw, AlertCircle } from 'lucide-react';
+import {
+  DollarSign,
+  TrendingUp,
+  RefreshCw,
+  AlertCircle,
+} from 'lucide-react';
 
 interface SubscriptionMetricsProps {
   mrr: number;
@@ -18,41 +23,54 @@ export default function SubscriptionMetrics({
   const metrics = [
     {
       label: 'Monthly Recurring Revenue',
-      value: `$${mrr.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
-      subtext: `+$${(mrr * 0.12).toFixed(2)} vs last mo`,
+      value: `$${mrr.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
+      subtext: 'Current Stripe MRR',
       icon: DollarSign,
       iconColor: 'text-emerald-600 dark:text-emerald-400',
     },
     {
       label: 'Active Pro Subscriptions',
       value: activeSubscribers.toLocaleString(),
-      subtext: '$29.00 / month per user',
+      subtext: 'Monthly billing',
       icon: TrendingUp,
       iconColor: 'text-blue-600 dark:text-blue-400',
     },
     {
       label: 'Monthly Churn Rate',
-      value: `${churnRate}%`,
+      value: `${churnRate.toFixed(1)}%`,
       subtext: 'Target: < 3.0%',
       icon: RefreshCw,
-      iconColor: 'opacity-50',
+      iconColor:
+        churnRate > 3
+          ? 'text-amber-600 dark:text-amber-400'
+          : 'text-emerald-600 dark:text-emerald-400',
     },
     {
       label: 'Payment Delinquencies',
-      value: failedPayments,
-      subtext: 'Failed card charges',
+      value: failedPayments.toLocaleString(),
+      subtext:
+        failedPayments > 0
+          ? 'Failed or overdue payments'
+          : 'No failed payments',
       icon: AlertCircle,
-      iconColor: failedPayments > 0 ? 'text-amber-600 dark:text-amber-400' : 'opacity-50',
+      iconColor:
+        failedPayments > 0
+          ? 'text-amber-600 dark:text-amber-400'
+          : 'opacity-50',
     },
   ];
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      {metrics.map((m, idx) => {
-        const Icon = m.icon;
+      {metrics.map((metric, index) => {
+        const Icon = metric.icon;
+
         return (
           <div
-            key={idx}
+            key={index}
             style={{
               backgroundColor: 'var(--bg-surface)',
               borderColor: 'var(--border-color)',
@@ -64,21 +82,24 @@ export default function SubscriptionMetrics({
                 style={{ color: 'var(--text-primary)' }}
                 className="text-xs font-semibold uppercase tracking-wider opacity-60"
               >
-                {m.label}
+                {metric.label}
               </span>
-              <Icon className={`w-4 h-4 ${m.iconColor}`} />
+
+              <Icon className={`w-4 h-4 ${metric.iconColor}`} />
             </div>
+
             <div
               style={{ color: 'var(--text-primary)' }}
               className="text-2xl font-bold"
             >
-              {m.value}
+              {metric.value}
             </div>
+
             <p
               style={{ color: 'var(--text-primary)' }}
               className="text-xs font-medium opacity-50"
             >
-              {m.subtext}
+              {metric.subtext}
             </p>
           </div>
         );

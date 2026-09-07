@@ -3,13 +3,71 @@
 import { useState } from 'react';
 import { KeyRound, Check } from 'lucide-react';
 
-export default function SecuritySettings() {
-  const [passSaved, setPassSaved] = useState(false);
+import { changePassword } from '@/api/profile';
 
-  const handlePasswordUpdate = (e: React.FormEvent) => {
+export default function SecuritySettings() {
+  const [formData, setFormData] = useState({
+    currentPassword: '',
+    newPassword: '',
+  });
+
+  const [passSaved, setPassSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    setPassSaved(true);
-    setTimeout(() => setPassSaved(false), 3000);
+
+    try {
+      setSaving(true);
+      setPassSaved(false);
+      setError('');
+
+      if (!formData.currentPassword || !formData.newPassword) {
+        setError('Please enter both your current and new password.');
+        return;
+      }
+
+      if (formData.newPassword.length < 6) {
+        setError('New password must be at least 6 characters long.');
+        return;
+      }
+
+      const response = await changePassword({
+        currentPassword: formData.currentPassword,
+        newPassword: formData.newPassword,
+      });
+
+      if (!response?.success) {
+        throw new Error(
+          response?.message ||
+            response?.error ||
+            'Failed to update password'
+        );
+      }
+
+      setFormData({
+        currentPassword: '',
+        newPassword: '',
+      });
+
+      setPassSaved(true);
+
+      setTimeout(() => {
+        setPassSaved(false);
+      }, 3000);
+    } catch (err: any) {
+      console.error('Password update error:', err);
+
+      setError(
+        err?.response?.data?.message ||
+          err?.response?.data?.error ||
+          err?.message ||
+          'Failed to update password'
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -27,6 +85,7 @@ export default function SecuritySettings() {
         >
           Security & Credentials
         </h2>
+
         <p
           style={{ color: 'var(--text-primary)' }}
           className="text-xs opacity-60 mt-0.5"
@@ -34,6 +93,19 @@ export default function SecuritySettings() {
           Manage your password and dual-factor authentication options.
         </p>
       </div>
+
+      {error && (
+        <div
+          style={{
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            borderColor: 'rgba(239, 68, 68, 0.3)',
+            color: 'var(--text-primary)',
+          }}
+          className="border rounded-lg px-4 py-3 text-xs"
+        >
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handlePasswordUpdate} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -44,9 +116,19 @@ export default function SecuritySettings() {
             >
               Current Password
             </label>
+
             <input
               type="password"
+              value={formData.currentPassword}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  currentPassword: e.target.value,
+                })
+              }
               placeholder="••••••••••••"
+              autoComplete="current-password"
+              required
               style={{
                 backgroundColor: 'var(--bg-primary)',
                 borderColor: 'var(--border-color)',
@@ -63,9 +145,20 @@ export default function SecuritySettings() {
             >
               New Password
             </label>
+
             <input
               type="password"
+              value={formData.newPassword}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  newPassword: e.target.value,
+                })
+              }
               placeholder="••••••••••••"
+              autoComplete="new-password"
+              required
+              minLength={6}
               style={{
                 backgroundColor: 'var(--bg-primary)',
                 borderColor: 'var(--border-color)',
@@ -79,14 +172,24 @@ export default function SecuritySettings() {
         <div className="pt-2 flex justify-end">
           <button
             type="submit"
+            disabled={saving}
             style={{
               backgroundColor: 'var(--primary)',
               color: '#ffffff',
             }}
-            className="flex items-center gap-2 px-4 py-2 hover:opacity-90 rounded-lg text-xs font-semibold transition-all shadow-sm"
+            className="flex items-center gap-2 px-4 py-2 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-xs font-semibold transition-all shadow-sm"
           >
-            {passSaved ? <Check className="w-4 h-4" /> : <KeyRound className="w-3.5 h-3.5" />}
-            {passSaved ? 'Password Updated' : 'Update Password'}
+            {passSaved ? (
+              <Check className="w-4 h-4" />
+            ) : (
+              <KeyRound className="w-3.5 h-3.5" />
+            )}
+
+            {saving
+              ? 'Updating...'
+              : passSaved
+                ? 'Password Updated'
+                : 'Update Password'}
           </button>
         </div>
       </form>
