@@ -120,15 +120,35 @@ export default function DashboardPage() {
         apiClient.get('/dashboard/profile'),
       ]);
 
-
       const overviewData =
         overviewResponse?.data ?? null;
 
       const performanceData =
         performanceResponse?.data ?? null;
 
-      const backendCampaigns: BackendCampaign[] =
-        campaignsResponse?.data ?? [];
+      const campaignsPayload =
+        campaignsResponse?.data ?? campaignsResponse ?? {};
+
+      let backendCampaigns: BackendCampaign[] = [];
+
+      if (Array.isArray(campaignsPayload)) {
+        backendCampaigns = campaignsPayload;
+      } else if (
+        Array.isArray(campaignsPayload?.campaigns)
+      ) {
+        backendCampaigns =
+          campaignsPayload.campaigns;
+      } else if (
+        Array.isArray(campaignsPayload?.data)
+      ) {
+        backendCampaigns =
+          campaignsPayload.data;
+      } else if (
+        Array.isArray(campaignsPayload?.data?.campaigns)
+      ) {
+        backendCampaigns =
+          campaignsPayload.data.campaigns;
+      }
 
       const profile: DashboardProfile | null =
         profileResponse?.data?.data ??
@@ -137,26 +157,33 @@ export default function DashboardPage() {
 
       setOverview(overviewData);
       setPerformance(performanceData);
+
       const tableCampaigns: CampaignTableItem[] =
         backendCampaigns.map((campaign) => ({
           id: campaign.id,
           name: campaign.name,
 
-          spend: `$${campaign.spend.toLocaleString(
-            undefined,
-            {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            }
-          )}`,
+          spend: `$${Number(
+            campaign.spend ?? 0
+          ).toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}`,
 
-          clicks: campaign.clicks.toLocaleString(),
+          clicks: Number(
+            campaign.clicks ?? 0
+          ).toLocaleString(),
 
-          ctr: `${campaign.ctr.toFixed(2)}%`,
+          ctr: `${Number(
+            campaign.ctr ?? 0
+          ).toFixed(2)}%`,
 
           roas:
-            campaign.roas !== undefined
-              ? `${campaign.roas.toFixed(2)}x`
+            campaign.roas !== undefined &&
+            campaign.roas !== null
+              ? `${Number(
+                  campaign.roas
+                ).toFixed(2)}x`
               : '-',
 
           status: campaign.status,
@@ -165,6 +192,7 @@ export default function DashboardPage() {
         }));
 
       setCampaigns(tableCampaigns);
+
       if (profile) {
         setUserPlan(
           profile.plan === 'PRO'
@@ -175,13 +203,12 @@ export default function DashboardPage() {
         setIsMetaConnected(
           Boolean(profile.isMetaConnected)
         );
-      } else if (campaignsResponse?.plan) {
-       
-        setUserPlan(
-          campaignsResponse.plan === 'PRO'
-            ? 'pro'
-            : 'free'
-        );
+      } else if (
+        campaignsPayload?.plan === 'PRO'
+      ) {
+        setUserPlan('pro');
+      } else {
+        setUserPlan('free');
       }
     } catch (err) {
       console.error(
@@ -208,7 +235,6 @@ export default function DashboardPage() {
 
       await syncDashboard();
 
-      
       await loadDashboard();
     } catch (err) {
       console.error(
@@ -247,11 +273,13 @@ export default function DashboardPage() {
           Syncing your dashboard data...
         </div>
       )}
+
       {error && (
         <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-500">
           {error}
         </div>
       )}
+
       <ConnectionAlert
         isConnected={isMetaConnected}
       />

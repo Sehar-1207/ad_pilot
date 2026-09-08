@@ -20,23 +20,21 @@ interface AnalyticsChartsProps {
   timelineData?: TimelineData[];
 }
 
-const fallbackData: TimelineData[] = [
-  { name: 'Mon', spend: 400, revenue: 1000 },
-  { name: 'Tue', spend: 300, revenue: 800 },
-  { name: 'Wed', spend: 550, revenue: 1500 },
-  { name: 'Thu', spend: 450, revenue: 1200 },
-  { name: 'Fri', spend: 600, revenue: 1800 },
-  { name: 'Sat', spend: 750, revenue: 2400 },
-  { name: 'Sun', spend: 650, revenue: 2100 },
+const zeroData: TimelineData[] = [
+  { name: 'Mon', spend: 0, revenue: 0 },
+  { name: 'Tue', spend: 0, revenue: 0 },
+  { name: 'Wed', spend: 0, revenue: 0 },
+  { name: 'Thu', spend: 0, revenue: 0 },
+  { name: 'Fri', spend: 0, revenue: 0 },
+  { name: 'Sat', spend: 0, revenue: 0 },
+  { name: 'Sun', spend: 0, revenue: 0 },
 ];
 
 export function AnalyticsCharts({
   timelineData = [],
 }: AnalyticsChartsProps) {
-  // Use real Meta data when available.
-  // Otherwise show the original sample data so the chart isn't empty.
   const chartData =
-    timelineData.length > 0 ? timelineData : fallbackData;
+    timelineData.length > 0 ? timelineData : zeroData;
 
   return (
     <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--border-color)] shadow-sm overflow-hidden transition-colors duration-300">
@@ -101,6 +99,7 @@ export function AnalyticsCharts({
                 fontWeight: 600,
               }}
               tickFormatter={(value) => `$${value}`}
+              domain={[0, 'auto']}
             />
 
             <Tooltip

@@ -15,40 +15,48 @@ import apiClient from '@/api/client';
 
 type UserTier = 'free' | 'pro';
 
+interface CampaignPagination {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+  hiddenCount: number;
+  hasMore: boolean;
+}
+
+interface CampaignAccess {
+  isPro: boolean;
+  visible: number;
+  total: number;
+  hidden: number;
+}
+
 interface CampaignApiResponse {
   success: boolean;
-  data: {
-    campaigns: CampaignData[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      pages: number;
-    };
-    range: string;
-    access?: {
-      isPro: boolean;
-      visible: number;
-      total: number;
-      hidden: number;
-    };
+  data?: {
+    campaigns?: CampaignData[];
+    pagination?: CampaignPagination;
+    range?: string;
+    access?: CampaignAccess;
   };
+  message?: string;
 }
 
 interface SummaryApiResponse {
   success: boolean;
-  data: {
-    totalActiveCampaigns: number;
-    totalSpend: number;
-    averageRoas: number;
-    needsAttention: number;
-    fatigued: number;
+  data?: {
+    totalActiveCampaigns?: number;
+    totalSpend?: number;
+    averageRoas?: number;
+    needsAttention?: number;
+    fatigued?: number;
   };
+  message?: string;
 }
 
 interface MeResponse {
   success: boolean;
-  data: {
+  data?: {
     id: string;
     name: string;
     email: string;
@@ -63,6 +71,23 @@ interface CheckoutResponse {
   url?: string;
   message?: string;
 }
+
+const EMPTY_PAGINATION: CampaignPagination = {
+  page: 1,
+  limit: 20,
+  total: 0,
+  pages: 0,
+  hiddenCount: 0,
+  hasMore: false,
+};
+
+const EMPTY_SUMMARY = {
+  totalActiveCampaigns: 0,
+  totalSpend: 0,
+  averageRoas: 0,
+  fatigued: 0,
+  needsAttention: 0,
+};
 
 export default function CampaignsPage() {
   const router = useRouter();
@@ -79,22 +104,14 @@ export default function CampaignsPage() {
 
   const [page, setPage] = useState(1);
 
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 20,
-    total: 0,
-    pages: 0,
-  });
+  const [pagination, setPagination] =
+    useState<CampaignPagination>(EMPTY_PAGINATION);
 
-  const [summary, setSummary] = useState({
-    totalActiveCampaigns: 0,
-    totalSpend: 0,
-    averageRoas: 0,
-    fatigued: 0,
-    needsAttention: 0,
-  });
+  const [summary, setSummary] =
+    useState(EMPTY_SUMMARY);
 
-  const [upgradeLoading, setUpgradeLoading] = useState(false);
+  const [upgradeLoading, setUpgradeLoading] =
+    useState(false);
 
   const isPro = userTier === 'pro';
 
@@ -103,11 +120,20 @@ export default function CampaignsPage() {
       return 0;
     }
 
+    if (pagination.hiddenCount > 0) {
+      return pagination.hiddenCount;
+    }
+
     return Math.max(
       pagination.total - campaigns.length,
       0
     );
-  }, [isPro, pagination.total, campaigns.length]);
+  }, [
+    isPro,
+    pagination.hiddenCount,
+    pagination.total,
+    campaigns.length,
+  ]);
 
   const loadCurrentUser = useCallback(async () => {
     try {
@@ -144,15 +170,19 @@ export default function CampaignsPage() {
           '/dashboard/campaigns',
           {
             params: {
-              search: searchQuery || undefined,
+              search:
+                searchQuery.trim() || undefined,
+
               status:
                 statusFilter !== 'all'
                   ? statusFilter
                   : undefined,
+
               health:
                 healthFilter !== 'all'
                   ? healthFilter
                   : undefined,
+
               range: '7d',
               page,
               limit: 20,
@@ -160,22 +190,58 @@ export default function CampaignsPage() {
           }
         );
 
-      if (response.data?.success) {
-        setCampaigns(
-          response.data.data.campaigns || []
-        );
+      const responseData = response.data;
 
-        setPagination(
-          response.data.data.pagination
+      if (!responseData?.success) {
+        throw new Error(
+          responseData?.message ||
+            'Failed to load campaigns'
         );
+      }
 
-        if (response.data.data.access) {
-          setUserTier(
-            response.data.data.access.isPro
-              ? 'pro'
-              : 'free'
-          );
-        }
+      const data = responseData.data;
+
+      const nextCampaigns =
+        Array.isArray(data?.campaigns)
+          ? data.campaigns
+          : [];
+
+      const nextPagination =
+        data?.pagination
+          ? {
+              page:
+                Number(data.pagination.page) || 1,
+
+              limit:
+                Number(data.pagination.limit) || 20,
+
+              total:
+                Number(data.pagination.total) || 0,
+
+              pages:
+                Number(data.pagination.pages) || 0,
+
+              hiddenCount:
+                Number(
+                  data.pagination.hiddenCount
+                ) || 0,
+
+              hasMore:
+                Boolean(
+                  data.pagination.hasMore
+                ),
+            }
+          : EMPTY_PAGINATION;
+
+      setCampaigns(nextCampaigns);
+      setPagination(nextPagination);
+
+      if (data?.access) {
+        setUserTier(
+          data.access.isPro
+            ? 'pro'
+            : 'free'
+        );
       }
     } catch (error: any) {
       console.error(
@@ -184,6 +250,7 @@ export default function CampaignsPage() {
       );
 
       setCampaigns([]);
+      setPagination(EMPTY_PAGINATION);
     } finally {
       setCampaignLoading(false);
     }
@@ -201,14 +268,42 @@ export default function CampaignsPage() {
           '/dashboard/campaigns/summary'
         );
 
-      if (response.data?.success) {
-        setSummary(response.data.data);
+      const responseData = response.data;
+
+      if (!responseData?.success) {
+        throw new Error(
+          responseData?.message ||
+            'Failed to load campaign summary'
+        );
       }
+
+      const data = responseData.data;
+
+      setSummary({
+        totalActiveCampaigns:
+          Number(
+            data?.totalActiveCampaigns
+          ) || 0,
+
+        totalSpend:
+          Number(data?.totalSpend) || 0,
+
+        averageRoas:
+          Number(data?.averageRoas) || 0,
+
+        fatigued:
+          Number(data?.fatigued) || 0,
+
+        needsAttention:
+          Number(data?.needsAttention) || 0,
+      });
     } catch (error: any) {
       console.error(
         'Failed to load campaign summary:',
         error?.response?.data || error
       );
+
+      setSummary(EMPTY_SUMMARY);
     }
   }, []);
 
