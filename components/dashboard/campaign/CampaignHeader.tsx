@@ -11,6 +11,7 @@ export default function CampaignHeader({
   userTier,
 }: CampaignHeaderProps) {
   const router = useRouter();
+
   const isPro = userTier === 'pro';
 
   const handleUpgrade = () => {
@@ -29,9 +30,10 @@ export default function CampaignHeader({
 
         <p
           style={{ color: 'var(--text-primary)' }}
-          className="text-xs opacity-70 mt-1"
+          className="mt-1 text-xs opacity-70"
         >
-          Monitor performance metrics, ad health, and Gemini AI insights across your connected Meta accounts.
+          Monitor performance metrics, ad health, and Gemini AI insights
+          across your connected Meta accounts.
         </p>
       </div>
 
@@ -40,12 +42,15 @@ export default function CampaignHeader({
           style={{
             borderColor: 'var(--border-color)',
             color: 'var(--text-primary)',
+            backgroundColor: 'var(--card-bg)',
           }}
-          className="flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold shadow-sm bg-transparent"
+          className="flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold shadow-sm"
         >
           <Crown
             className={`h-3.5 w-3.5 ${
-              isPro ? 'text-amber-400' : 'opacity-50'
+              isPro
+                ? 'text-amber-400'
+                : 'opacity-50'
             }`}
           />
 
@@ -58,7 +63,7 @@ export default function CampaignHeader({
           <button
             type="button"
             onClick={handleUpgrade}
-            className="flex items-center gap-1.5 rounded-lg bg-teal-500 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-teal-600 transition-colors"
+            className="flex items-center gap-1.5 rounded-lg bg-[var(--primary)] px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[var(--primary-hover)]"
           >
             <Sparkles className="h-3.5 w-3.5" />
             Upgrade

@@ -7,17 +7,35 @@ export function ProUpgradeCard() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen p-6 flex items-center justify-center">
-      <div className="max-w-md w-full rounded-xl border border-[var(--border-color)] p-8 text-center">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-[var(--border-color)]">
+    <div className="flex min-h-screen items-center justify-center p-6">
+      <div
+        style={{
+          backgroundColor: 'var(--card-bg)',
+          borderColor: 'var(--border-color)',
+        }}
+        className="w-full max-w-md rounded-xl border p-8 text-center"
+      >
+        <div
+          style={{
+            borderColor: 'var(--border-color)',
+            backgroundColor: 'var(--card-bg)',
+          }}
+          className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border"
+        >
           <Lock className="h-5 w-5 text-amber-500" />
         </div>
 
-        <h2 className="text-lg font-bold text-[var(--text-primary)]">
+        <h2
+          style={{ color: 'var(--text-primary)' }}
+          className="text-lg font-bold"
+        >
           Pro Insights Required
         </h2>
 
-        <p className="text-sm text-[var(--text-secondary)] mt-2 leading-relaxed">
+        <p
+          style={{ color: 'var(--text-secondary)' }}
+          className="mt-2 text-sm leading-relaxed"
+        >
           AI-powered campaign diagnostics and optimization recommendations
           are available on the Pro plan.
         </p>
@@ -25,7 +43,10 @@ export function ProUpgradeCard() {
         <button
           type="button"
           onClick={() => router.push('/pricing')}
-          className="mt-5 inline-flex items-center gap-2 rounded-lg bg-teal-500 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-600 transition-colors"
+          style={{
+            backgroundColor: 'var(--primary)',
+          }}
+          className="mt-5 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
         >
           <Sparkles className="h-4 w-4" />
           Upgrade to Pro

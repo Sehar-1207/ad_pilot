@@ -3,7 +3,7 @@
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-interface Campaign {
+export interface Campaign {
   id: string;
   name: string;
   status: string;
@@ -35,21 +35,26 @@ function healthLabel(health: string) {
     case 'NORMAL':
       return 'Learning';
     default:
-      return health;
+      return health || 'Unknown';
   }
 }
 
 function healthClass(health: string) {
   switch (health) {
     case 'PROFITABLE':
-      return 'border-[var(--accent-teal)] text-[var(--accent-teal)]';
+      return 'border-teal-500/30 bg-teal-500/10 text-teal-400';
+
     case 'FATIGUED':
+      return 'border-rose-500/30 bg-rose-500/10 text-rose-400';
+
     case 'NEEDS_ATTENTION':
-      return 'border-rose-500 text-rose-500';
+      return 'border-red-500/30 bg-red-500/10 text-red-400';
+
     case 'NORMAL':
-      return 'border-amber-500 text-amber-500';
+      return 'border-amber-500/30 bg-amber-500/10 text-amber-400';
+
     default:
-      return 'border-[var(--border-color)] text-[var(--text-secondary)]';
+      return 'border-[var(--border-color)] bg-transparent text-[var(--text-secondary)]';
   }
 }
 
@@ -66,7 +71,11 @@ export function CampaignHeader({
         <button
           type="button"
           onClick={() => router.push('/dashboard/campaigns')}
-          className="flex items-center gap-2 text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-color)] px-3 py-1.5 rounded-lg transition-colors"
+          style={{
+            color: 'var(--text-secondary)',
+            borderColor: 'var(--border-color)',
+          }}
+          className="flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors hover:text-[var(--text-primary)]"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Campaigns
@@ -76,7 +85,11 @@ export function CampaignHeader({
           type="button"
           onClick={onReAnalyze}
           disabled={loadingInsights}
-          className="flex items-center gap-1.5 text-xs font-semibold text-[var(--primary)] border border-[var(--primary)] px-3 py-1.5 rounded-lg hover:opacity-80 transition-opacity disabled:opacity-50"
+          style={{
+            color: 'var(--primary)',
+            borderColor: 'var(--primary)',
+          }}
+          className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <RefreshCw
             className={`h-3.5 w-3.5 ${
@@ -88,13 +101,19 @@ export function CampaignHeader({
         </button>
       </div>
 
-      <div className="rounded-xl border border-[var(--border-color)] p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div
+        style={{
+          backgroundColor: 'var(--card-bg)',
+          borderColor: 'var(--border-color)',
+        }}
+        className="flex flex-col justify-between gap-4 rounded-xl border p-6 md:flex-row md:items-center"
+      >
         <div>
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex flex-wrap items-center gap-2">
             <span
-              className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase border ${
-                campaign.status === 'active'
-                  ? 'border-[var(--accent-teal)] text-[var(--accent-teal)]'
+              className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${
+                campaign.status.toLowerCase() === 'active'
+                  ? 'border-teal-500/30 bg-teal-500/10 text-teal-400'
                   : 'border-[var(--border-color)] text-[var(--text-secondary)]'
               }`}
             >
@@ -102,68 +121,100 @@ export function CampaignHeader({
             </span>
 
             <span
-              className={`rounded-md px-2 py-0.5 text-[10px] font-bold border ${healthClass(
+              className={`rounded-md border px-2 py-0.5 text-[10px] font-bold ${healthClass(
                 campaign.health
               )}`}
             >
               {healthLabel(campaign.health)}
             </span>
 
-            <span className="rounded-md px-2 py-0.5 text-[10px] font-bold border border-amber-500 text-amber-500">
+            <span className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-400">
               PRO
             </span>
           </div>
 
-          <h1 className="text-2xl font-bold mt-2">
+          <h1
+            style={{ color: 'var(--text-primary)' }}
+            className="mt-2 text-2xl font-bold"
+          >
             {campaign.name}
           </h1>
 
-          <p className="text-xs text-[var(--text-secondary)] mt-1">
-            AI-powered diagnostic breakdown and actionable optimization suggestions.
+          <p
+            style={{ color: 'var(--text-secondary)' }}
+            className="mt-1 text-xs"
+          >
+            AI-powered diagnostic breakdown and actionable optimization
+            suggestions.
           </p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 border-t md:border-t-0 md:border-l border-[var(--border-color)] pt-4 md:pt-0 md:pl-6">
+        <div
+          style={{ borderColor: 'var(--border-color)' }}
+          className="grid grid-cols-2 gap-3 border-t pt-4 sm:grid-cols-4 md:border-l md:border-t-0 md:pl-6 md:pt-0"
+        >
           <div>
-            <span className="text-[11px] text-[var(--text-secondary)] block font-medium">
+            <span
+              style={{ color: 'var(--text-secondary)' }}
+              className="block text-[11px] font-medium"
+            >
               Ad Spend
             </span>
 
-            <span className="text-sm font-bold">
+            <span
+              style={{ color: 'var(--text-primary)' }}
+              className="text-sm font-bold"
+            >
               $
-              {campaign.spend.toLocaleString('en-US', {
+              {Number(campaign.spend || 0).toLocaleString('en-US', {
                 minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
               })}
             </span>
           </div>
 
           <div>
-            <span className="text-[11px] text-[var(--text-secondary)] block font-medium">
+            <span
+              style={{ color: 'var(--text-secondary)' }}
+              className="block text-[11px] font-medium"
+            >
               Return (ROAS)
             </span>
 
-            <span className="text-sm font-bold text-[var(--accent-teal)]">
-              {campaign.roas.toFixed(1)}x
+            <span className="text-sm font-bold text-teal-400">
+              {Number(campaign.roas || 0).toFixed(2)}x
             </span>
           </div>
 
           <div>
-            <span className="text-[11px] text-[var(--text-secondary)] block font-medium">
+            <span
+              style={{ color: 'var(--text-secondary)' }}
+              className="block text-[11px] font-medium"
+            >
               Conversions
             </span>
 
-            <span className="text-sm font-bold">
-              {campaign.conversions.toLocaleString()}
+            <span
+              style={{ color: 'var(--text-primary)' }}
+              className="text-sm font-bold"
+            >
+              {Number(campaign.conversions || 0).toLocaleString()}
             </span>
           </div>
 
           <div>
-            <span className="text-[11px] text-[var(--text-secondary)] block font-medium">
+            <span
+              style={{ color: 'var(--text-secondary)' }}
+              className="block text-[11px] font-medium"
+            >
               Click Rate
             </span>
 
-            <span className="text-sm font-bold">
-              {campaign.ctr.toFixed(2)}%
+            <span
+              style={{ color: 'var(--text-primary)' }}
+              className="text-sm font-bold"
+            >
+              {Number(campaign.ctr || 0).toFixed(2)}%
             </span>
           </div>
         </div>

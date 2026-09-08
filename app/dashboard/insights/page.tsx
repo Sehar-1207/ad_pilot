@@ -2,15 +2,18 @@
 
 import { useCallback, useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Sparkles, AlertTriangle } from 'lucide-react';
+import {
+  Sparkles,
+  AlertTriangle,
+  Lock,
+  ArrowUpRight,
+} from 'lucide-react';
 
 import apiClient from '@/api/client';
 import { CampaignHeader } from '@/components/dashboard/insights/campaigns';
 import { InsightsSummary } from '@/components/dashboard/insights/InsightSummary';
 import { InsightsAnalysisGrid } from '@/components/dashboard/insights/InsightAnalysis';
 import { RecommendedActionsList } from '@/components/dashboard/insights/RecommandedActions';
-import { ProUpgradeCard } from '@/components/dashboard/insights/ProUpgradeCard';
-import { CampaignNotFound } from '@/components/dashboard/insights/NotFound';
 
 interface Campaign {
   id: string;
@@ -63,9 +66,106 @@ interface InsightsResponse {
   message?: string;
 }
 
+function ProLockedScreen() {
+  const router = useRouter();
+
+  return (
+    <div className="min-h-screen p-6 md:p-10 text-[var(--text-primary)]">
+      <div className="max-w-4xl mx-auto min-h-[600px] flex items-center justify-center">
+        <div className="w-full max-w-2xl text-center border border-[var(--border-color)] rounded-2xl p-8 md:p-12 bg-[var(--card-bg)]">
+
+          <div className="mx-auto mb-6 w-16 h-16 rounded-full bg-[var(--primary)]/10 flex items-center justify-center">
+            <Lock className="w-8 h-8 text-[var(--primary)]" />
+          </div>
+
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <Sparkles className="w-5 h-5 text-[var(--primary)]" />
+
+            <span className="text-xs font-bold uppercase tracking-wider text-[var(--primary)]">
+              Pro Feature
+            </span>
+          </div>
+
+          <h1 className="text-2xl md:text-3xl font-bold">
+            AI Campaign Insights are locked
+          </h1>
+
+          <p className="mt-3 text-sm md:text-base text-[var(--text-secondary)] max-w-xl mx-auto leading-6">
+            Get AI-powered campaign analysis, performance explanations,
+            health scores, and recommended actions with the Pro plan.
+          </p>
+
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+
+            <button
+              type="button"
+              onClick={() => router.push('/pricing')}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary-hover)] transition-colors"
+            >
+              Upgrade to Pro
+              <ArrowUpRight className="w-4 h-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => router.push('/dashboard/campaigns')}
+              className="px-6 py-3 rounded-lg border border-[var(--border-color)] text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-accent)] transition-colors"
+            >
+              Back to Campaigns
+            </button>
+
+          </div>
+
+          <div className="mt-8 pt-6 border-t border-[var(--border-color)]">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
+
+              <div className="rounded-lg bg-[var(--bg-accent)] p-4">
+                <Lock className="w-4 h-4 text-[var(--primary)] mb-2" />
+
+                <p className="text-sm font-semibold">
+                  AI Analysis
+                </p>
+
+                <p className="text-xs text-[var(--text-secondary)] mt-1">
+                  Understand campaign performance automatically.
+                </p>
+              </div>
+
+              <div className="rounded-lg bg-[var(--bg-accent)] p-4">
+                <Sparkles className="w-4 h-4 text-[var(--primary)] mb-2" />
+
+                <p className="text-sm font-semibold">
+                  Smart Recommendations
+                </p>
+
+                <p className="text-xs text-[var(--text-secondary)] mt-1">
+                  Get actionable suggestions based on your data.
+                </p>
+              </div>
+
+              <div className="rounded-lg bg-[var(--bg-accent)] p-4">
+                <ArrowUpRight className="w-4 h-4 text-[var(--primary)] mb-2" />
+
+                <p className="text-sm font-semibold">
+                  Campaign Health
+                </p>
+
+                <p className="text-xs text-[var(--text-secondary)] mt-1">
+                  See what is working and what needs attention.
+                </p>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function InsightsContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
 
   const campaignId = searchParams.get('id');
 
@@ -96,6 +196,8 @@ function InsightsContent() {
       setPlan(userPlan);
 
       if (userPlan !== 'PRO') {
+        setCampaign(null);
+        setInsights(null);
         setLoading(false);
         return;
       }
@@ -106,6 +208,8 @@ function InsightsContent() {
         );
 
       setCampaign(campaignResponse.data.data);
+
+      setLoadingInsights(true);
 
       const insightsResponse =
         await apiClient.get<InsightsResponse>(
@@ -119,6 +223,8 @@ function InsightsContent() {
 
       if (status === 403 || code === 'PRO_REQUIRED') {
         setPlan('FREE');
+        setCampaign(null);
+        setInsights(null);
         return;
       }
 
@@ -139,7 +245,6 @@ function InsightsContent() {
 
   const handleReAnalyze = async () => {
     if (!campaignId || plan !== 'PRO') {
-      router.push('/pricing');
       return;
     }
 
@@ -159,7 +264,8 @@ function InsightsContent() {
 
       if (status === 403 || code === 'PRO_REQUIRED') {
         setPlan('FREE');
-        router.push('/pricing');
+        setCampaign(null);
+        setInsights(null);
         return;
       }
 
@@ -188,15 +294,36 @@ function InsightsContent() {
   }
 
   if (plan === 'FREE') {
-    return <ProUpgradeCard />;
+    return <ProLockedScreen />;
   }
 
   if (!campaign) {
-    return <CampaignNotFound error={error} />;
+    return (
+      <div className="min-h-screen p-6 text-[var(--text-primary)]">
+        <div className="max-w-4xl mx-auto">
+          <div className="rounded-xl border border-rose-500/30 p-5">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-rose-500 shrink-0" />
+
+              <div>
+                <h3 className="text-sm font-bold">
+                  Campaign not found
+                </h3>
+
+                <p className="text-xs text-[var(--text-secondary)] mt-1">
+                  {error || 'Unable to find the selected campaign.'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6 p-4 md:p-6 text-[var(--text-primary)] min-h-screen">
+
       <CampaignHeader
         campaign={campaign}
         loadingInsights={loadingInsights}
@@ -237,6 +364,7 @@ function InsightsContent() {
 
       {!loadingInsights && insights && (
         <div className="space-y-6">
+
           <InsightsSummary
             summary={insights.summary}
             healthScore={insights.healthScore}
@@ -250,8 +378,10 @@ function InsightsContent() {
           <RecommendedActionsList
             actions={insights.recommendedActions}
           />
+
         </div>
       )}
+
     </div>
   );
 }

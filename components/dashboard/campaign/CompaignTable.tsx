@@ -11,10 +11,7 @@ export interface CampaignData {
   id: string;
   name: string;
   status: 'active' | 'paused';
-
-  // Backend sends: PROFITABLE, FATIGUED, NEEDS_ATTENTION, NORMAL
   health: string;
-
   spend: number;
   clicks: number;
   ctr: number;
@@ -41,16 +38,12 @@ const formatHealth = (health: string) => {
   switch (health) {
     case 'PROFITABLE':
       return 'Profitable';
-
     case 'FATIGUED':
       return 'Fatigued';
-
     case 'NEEDS_ATTENTION':
       return 'Needs Attention';
-
     case 'NORMAL':
       return 'Learning';
-
     default:
       return health || 'Unknown';
   }
@@ -60,16 +53,12 @@ const getHealthClasses = (health: string) => {
   switch (health) {
     case 'PROFITABLE':
       return 'bg-teal-500/10 text-teal-400 border border-teal-500/30';
-
     case 'FATIGUED':
       return 'bg-rose-500/10 text-rose-400 border border-rose-500/30';
-
     case 'NEEDS_ATTENTION':
       return 'bg-red-500/10 text-red-400 border border-red-500/30';
-
     case 'NORMAL':
       return 'bg-amber-500/10 text-amber-400 border border-amber-500/30';
-
     default:
       return 'bg-slate-500/10 text-slate-400 border border-slate-500/30';
   }
@@ -83,7 +72,7 @@ export default function CampaignTable({
 }: CampaignTableProps) {
   return (
     <div className="w-full overflow-x-auto bg-transparent">
-      <table className="w-full text-left text-xs whitespace-nowrap">
+      <table className="w-full whitespace-nowrap text-left text-xs">
         <thead
           style={{ borderColor: 'var(--border-color)' }}
           className="border-b bg-transparent"
@@ -130,7 +119,6 @@ export default function CampaignTable({
             >
               <div className="flex items-center gap-1">
                 <span>CTR</span>
-
                 {!isPro && (
                   <Lock className="h-3 w-3 text-amber-500" />
                 )}
@@ -143,7 +131,6 @@ export default function CampaignTable({
             >
               <div className="flex items-center gap-1">
                 <span>ROAS</span>
-
                 {!isPro && (
                   <Lock className="h-3 w-3 text-amber-500" />
                 )}
@@ -169,7 +156,6 @@ export default function CampaignTable({
               style={{ borderColor: 'var(--border-color)' }}
               className="transition-colors hover:bg-white/5"
             >
-              {/* Campaign */}
               <td
                 style={{ color: 'var(--text-primary)' }}
                 className="p-4 font-medium"
@@ -177,7 +163,6 @@ export default function CampaignTable({
                 {cmp.name}
               </td>
 
-              {/* Status */}
               <td className="p-4">
                 <span
                   className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold capitalize ${
@@ -190,7 +175,6 @@ export default function CampaignTable({
                 </span>
               </td>
 
-              {/* Health */}
               <td className="p-4">
                 <span
                   className={`rounded-md px-2 py-0.5 text-[10px] font-bold ${getHealthClasses(
@@ -201,7 +185,6 @@ export default function CampaignTable({
                 </span>
               </td>
 
-              {/* Spend */}
               <td
                 style={{ color: 'var(--text-primary)' }}
                 className="p-4 font-medium"
@@ -209,10 +192,10 @@ export default function CampaignTable({
                 $
                 {Number(cmp.spend || 0).toLocaleString('en-US', {
                   minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
                 })}
               </td>
 
-              {/* Clicks */}
               <td
                 style={{ color: 'var(--text-primary)' }}
                 className="p-4 font-medium"
@@ -220,7 +203,6 @@ export default function CampaignTable({
                 {Number(cmp.clicks || 0).toLocaleString()}
               </td>
 
-              {/* CTR */}
               <td
                 style={{ color: 'var(--text-primary)' }}
                 className="p-4"
@@ -230,7 +212,7 @@ export default function CampaignTable({
                 ) : (
                   <div className="flex items-center gap-1.5">
                     <span className="select-none opacity-30 blur-sm">
-                      2.40%
+                      --%
                     </span>
 
                     <Lock className="h-3 w-3 shrink-0 text-amber-500" />
@@ -238,7 +220,6 @@ export default function CampaignTable({
                 )}
               </td>
 
-              {/* ROAS */}
               <td className="p-4">
                 {isPro ? (
                   <div className="flex w-fit items-center gap-1.5 rounded-lg border border-teal-500/30 bg-teal-500/10 px-2 py-1 font-bold text-teal-400">
@@ -260,7 +241,6 @@ export default function CampaignTable({
                 )}
               </td>
 
-              {/* AI Insights */}
               <td className="p-4">
                 <button
                   type="button"
@@ -268,9 +248,7 @@ export default function CampaignTable({
                   className="flex items-center gap-1 rounded border border-teal-500/30 bg-teal-500/10 px-2.5 py-1 text-[11px] font-semibold text-teal-400 transition-colors hover:bg-teal-500/20"
                 >
                   <Sparkles className="h-3 w-3 text-teal-400" />
-
                   View AI Insights
-
                   <ChevronRight className="h-3 w-3" />
                 </button>
               </td>
@@ -290,4 +268,3 @@ export default function CampaignTable({
     </div>
   );
 }
-

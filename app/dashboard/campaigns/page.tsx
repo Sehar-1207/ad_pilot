@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -68,31 +67,15 @@ interface CheckoutResponse {
 export default function CampaignsPage() {
   const router = useRouter();
 
-  // ============================================================
-  // USER
-  // ============================================================
-
   const [userTier, setUserTier] = useState<UserTier>('free');
   const [userLoading, setUserLoading] = useState(true);
-
-  // ============================================================
-  // CAMPAIGNS
-  // ============================================================
 
   const [campaigns, setCampaigns] = useState<CampaignData[]>([]);
   const [campaignLoading, setCampaignLoading] = useState(true);
 
-  // ============================================================
-  // FILTERS
-  // ============================================================
-
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [healthFilter, setHealthFilter] = useState('all');
-
-  // ============================================================
-  // PAGINATION
-  // ============================================================
 
   const [page, setPage] = useState(1);
 
@@ -103,10 +86,6 @@ export default function CampaignsPage() {
     pages: 0,
   });
 
-  // ============================================================
-  // SUMMARY
-  // ============================================================
-
   const [summary, setSummary] = useState({
     totalActiveCampaigns: 0,
     totalSpend: 0,
@@ -115,20 +94,14 @@ export default function CampaignsPage() {
     needsAttention: 0,
   });
 
-  // ============================================================
-  // UPGRADE
-  // ============================================================
-
   const [upgradeLoading, setUpgradeLoading] = useState(false);
-
-  // ============================================================
-  // DERIVED VALUES
-  // ============================================================
 
   const isPro = userTier === 'pro';
 
   const hiddenCount = useMemo(() => {
-    if (isPro) return 0;
+    if (isPro) {
+      return 0;
+    }
 
     return Math.max(
       pagination.total - campaigns.length,
@@ -136,17 +109,12 @@ export default function CampaignsPage() {
     );
   }, [isPro, pagination.total, campaigns.length]);
 
-  // ============================================================
-  // LOAD CURRENT USER
-  // ============================================================
-
   const loadCurrentUser = useCallback(async () => {
     try {
       setUserLoading(true);
 
-      const response = await apiClient.get<MeResponse>(
-        '/auth/me'
-      );
+      const response =
+        await apiClient.get<MeResponse>('/auth/me');
 
       const plan = response.data?.data?.plan;
 
@@ -166,10 +134,6 @@ export default function CampaignsPage() {
       setUserLoading(false);
     }
   }, []);
-
-  // ============================================================
-  // LOAD CAMPAIGNS
-  // ============================================================
 
   const loadCampaigns = useCallback(async () => {
     try {
@@ -205,7 +169,6 @@ export default function CampaignsPage() {
           response.data.data.pagination
         );
 
-
         if (response.data.data.access) {
           setUserTier(
             response.data.data.access.isPro
@@ -231,10 +194,6 @@ export default function CampaignsPage() {
     page,
   ]);
 
-  // ============================================================
-  // LOAD SUMMARY
-  // ============================================================
-
   const loadSummary = useCallback(async () => {
     try {
       const response =
@@ -253,10 +212,6 @@ export default function CampaignsPage() {
     }
   }, []);
 
-  // ============================================================
-  // INITIAL LOAD
-  // ============================================================
-
   useEffect(() => {
     loadCurrentUser();
     loadSummary();
@@ -265,17 +220,9 @@ export default function CampaignsPage() {
     loadSummary,
   ]);
 
-  // ============================================================
-  // LOAD CAMPAIGNS WHEN FILTERS CHANGE
-  // ============================================================
-
   useEffect(() => {
     loadCampaigns();
   }, [loadCampaigns]);
-
-  // ============================================================
-  // RESET PAGE WHEN FILTER CHANGES
-  // ============================================================
 
   useEffect(() => {
     setPage(1);
@@ -285,66 +232,29 @@ export default function CampaignsPage() {
     healthFilter,
   ]);
 
-  // ============================================================
-  // VIEW AI INSIGHTS
-  // ============================================================
-
-  const handleViewInsights = async (
+  const handleViewInsights = (
     campaignId: string
   ) => {
-
     if (!isPro) {
-      await handleUpgrade();
+      router.push('/pricing');
+      return;
+    }
+
+    router.push(
+      `/dashboard/insights?id=${encodeURIComponent(
+        campaignId
+      )}`
+    );
+  };
+
+  const handleUpgrade = async () => {
+    if (upgradeLoading) {
       return;
     }
 
     try {
-
-      await apiClient.get(
-        `/dashboard/campaigns/${campaignId}/ai-insights`
-      );
-
-      router.push(
-        `/dashboard/insights?id=${encodeURIComponent(
-          campaignId
-        )}`
-      );
-    } catch (error: any) {
-      const status =
-        error?.response?.status;
-
-      const code =
-        error?.response?.data?.code;
-
-      if (
-        status === 403 ||
-        code === 'PRO_REQUIRED'
-      ) {
-        await handleUpgrade();
-        return;
-      }
-
-      console.error(
-        'Failed to load AI insights:',
-        error?.response?.data || error
-      );
-
-      alert(
-        error?.response?.data?.message ||
-          'Unable to load AI insights.'
-      );
-    }
-  };
-
-  // ============================================================
-  // STRIPE UPGRADE
-  // ============================================================
-
-  const handleUpgrade = async () => {
-    if (upgradeLoading) return;
-
-    try {
       setUpgradeLoading(true);
+
       const response =
         await apiClient.post<CheckoutResponse>(
           '/subscriptions/checkout'
@@ -378,10 +288,6 @@ export default function CampaignsPage() {
     }
   };
 
-  // ============================================================
-  // LOADING STATE
-  // ============================================================
-
   if (userLoading) {
     return (
       <div className="flex min-h-[400px] w-full items-center justify-center">
@@ -397,24 +303,12 @@ export default function CampaignsPage() {
     );
   }
 
-  // ============================================================
-  // UI
-  // ============================================================
-
   return (
     <div className="w-full space-y-6 bg-transparent p-4 md:p-6">
-      {/* ======================================================
-          HEADER
-      ======================================================= */}
 
       <CampaignHeader
         userTier={userTier}
-        // onToggleTier={handleUpgrade}
       />
-
-      {/* ======================================================
-          METRICS
-      ======================================================= */}
 
       <CampaignMetrics
         activeCount={
@@ -432,10 +326,6 @@ export default function CampaignsPage() {
         isPro={isPro}
       />
 
-      {/* ======================================================
-          FILTERS
-      ======================================================= */}
-
       <CampaignFilters
         searchQuery={searchQuery}
         onSearchChange={(value) => {
@@ -450,10 +340,6 @@ export default function CampaignsPage() {
           setHealthFilter(value);
         }}
       />
-
-      {/* ======================================================
-          CAMPAIGN TABLE
-      ======================================================= */}
 
       <div
         style={{
@@ -484,10 +370,6 @@ export default function CampaignsPage() {
           />
         )}
 
-        {/* ====================================================
-            PRO BANNER
-        ===================================================== */}
-
         {!isPro && hiddenCount > 0 && (
           <ProUpgradeBanner
             hiddenCount={hiddenCount}
@@ -496,13 +378,10 @@ export default function CampaignsPage() {
         )}
       </div>
 
-      {/* ======================================================
-          PAGINATION
-      ======================================================= */}
-
       {isPro &&
         pagination.pages > 1 && (
           <div className="flex items-center justify-center gap-4">
+
             <button
               type="button"
               disabled={
@@ -511,10 +390,13 @@ export default function CampaignsPage() {
               }
               onClick={() =>
                 setPage((current) =>
-                  Math.max(current - 1, 1)
+                  Math.max(
+                    current - 1,
+                    1
+                  )
                 )
               }
-              className="rounded-lg border border-white/10 px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-lg border border-[var(--border-color)] px-4 py-2 text-xs font-semibold text-[var(--text-primary)] transition hover:bg-[var(--bg-accent)] disabled:cursor-not-allowed disabled:opacity-40"
             >
               Previous
             </button>
@@ -544,13 +426,13 @@ export default function CampaignsPage() {
                   )
                 )
               }
-              className="rounded-lg border border-white/10 px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-lg border border-[var(--border-color)] px-4 py-2 text-xs font-semibold text-[var(--text-primary)] transition hover:bg-[var(--bg-accent)] disabled:cursor-not-allowed disabled:opacity-40"
             >
               Next
             </button>
+
           </div>
         )}
     </div>
   );
 }
-

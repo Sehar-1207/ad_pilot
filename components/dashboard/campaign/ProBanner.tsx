@@ -29,15 +29,14 @@ export default function ProUpgradeBanner({
         throw new Error('Stripe checkout URL was not returned.');
       }
 
-      // Optional parent callback before redirect
       onUpgrade?.();
 
-      // Redirect user to Stripe Checkout
       window.location.href = response.checkoutUrl;
     } catch (err: any) {
       console.error('Upgrade error:', err);
 
       const message =
+        err?.response?.data?.message ||
         err?.response?.data?.error ||
         err?.message ||
         'Unable to start the Pro upgrade. Please try again.';
@@ -72,7 +71,7 @@ export default function ProUpgradeBanner({
           className="text-xs opacity-70"
         >
           Free plan users can view up to 3 synced Meta campaigns. Upgrade to
-          Pro to analyze all your campaigns and unlock real-time Gemini AI
+          Pro to analyze all your campaigns and unlock Gemini AI
           recommendations.
         </p>
 
@@ -94,11 +93,10 @@ export default function ProUpgradeBanner({
               Redirecting to Checkout...
             </>
           ) : (
-            'Upgrade to Pro ($29/mo)'
+            'Upgrade to Pro'
           )}
         </button>
       </div>
     </div>
   );
 }
-

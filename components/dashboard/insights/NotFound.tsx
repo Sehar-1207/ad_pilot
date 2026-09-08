@@ -4,10 +4,12 @@ import { ArrowLeft, AlertTriangle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface CampaignNotFoundProps {
-  error: string;
+  error?: string;
 }
 
-export function CampaignNotFound({ error }: CampaignNotFoundProps) {
+export function CampaignNotFound({
+  error,
+}: CampaignNotFoundProps) {
   const router = useRouter();
 
   return (
@@ -15,20 +17,36 @@ export function CampaignNotFound({ error }: CampaignNotFoundProps) {
       <button
         type="button"
         onClick={() => router.push('/dashboard/campaigns')}
-        className="flex items-center gap-2 text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-color)] px-3 py-1.5 rounded-lg transition-colors"
+        style={{
+          color: 'var(--text-secondary)',
+          borderColor: 'var(--border-color)',
+        }}
+        className="flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors hover:text-[var(--text-primary)]"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Campaigns
       </button>
 
-      <div className="mt-6 rounded-xl border border-[var(--border-color)] p-8 text-center">
-        <AlertTriangle className="h-7 w-7 text-rose-500 mx-auto mb-3" />
+      <div
+        style={{
+          backgroundColor: 'var(--card-bg)',
+          borderColor: 'var(--border-color)',
+        }}
+        className="mt-6 rounded-xl border p-8 text-center"
+      >
+        <AlertTriangle className="mx-auto mb-3 h-7 w-7 text-rose-500" />
 
-        <h2 className="text-base font-bold text-[var(--text-primary)]">
+        <h2
+          style={{ color: 'var(--text-primary)' }}
+          className="text-base font-bold"
+        >
           Campaign Not Found
         </h2>
 
-        <p className="text-xs text-[var(--text-secondary)] mt-1">
+        <p
+          style={{ color: 'var(--text-secondary)' }}
+          className="mt-1 text-xs"
+        >
           {error || 'Unable to load this campaign.'}
         </p>
       </div>
