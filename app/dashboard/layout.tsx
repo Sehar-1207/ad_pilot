@@ -28,8 +28,8 @@ export default function DashboardLayout({
       <div className="flex-1 flex flex-col min-w-0 md:ml-64">
         <DashboardNavbar 
           isMetaConnected={isMetaConnected} 
-          userName={userName} 
-          userRole="User"
+          // userName={userName} 
+          // userRole="User"
         />
 
         <main className="flex-1 p-6 md:p-8 overflow-y-auto">

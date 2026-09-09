@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
@@ -71,35 +71,139 @@ interface InsightsResponse {
   code?: string;
 }
 
+function NoCampaignScreen() {
+  const router = useRouter();
+
+  return (
+    <div
+      className="min-h-screen flex items-center justify-center px-6"
+      style={{
+        backgroundColor: 'var(--bg-primary)',
+        color: 'var(--text-primary)',
+      }}
+    >
+      <div
+        className="w-full max-w-md rounded-2xl border p-8 text-center shadow-sm"
+        style={{
+          backgroundColor: 'var(--bg-surface)',
+          borderColor: 'var(--border-color)',
+        }}
+      >
+        <div
+          className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full"
+          style={{
+            backgroundColor: 'var(--bg-accent)',
+          }}
+        >
+          <AlertCircle
+            className="h-7 w-7"
+            style={{ color: 'var(--text-secondary)' }}
+          />
+        </div>
+
+        <h1
+          className="text-2xl font-bold"
+          style={{ color: 'var(--text-primary)' }}
+        >
+          No Campaign Found
+        </h1>
+
+        <p
+          className="mt-3 leading-6"
+          style={{ color: 'var(--text-secondary)' }}
+        >
+          The campaign you are trying to view does not exist or is no longer
+          available.
+        </p>
+
+        <button
+          onClick={() => router.push('/dashboard/campaigns')}
+          className="mt-6 w-full rounded-xl px-5 py-3 text-sm font-semibold text-white transition"
+          style={{
+            backgroundColor: 'var(--primary)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--primary-hover)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--primary)';
+          }}
+        >
+          Back to Campaigns
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ProLockedScreen() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
-      <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-8 text-center">
-        <div className="mx-auto mb-5 w-14 h-14 rounded-full bg-violet-100 flex items-center justify-center">
-          <Lock className="w-7 h-7 text-violet-600" />
+    <div
+      className="min-h-screen flex items-center justify-center px-6"
+      style={{
+        backgroundColor: 'var(--bg-primary)',
+      }}
+    >
+      <div
+        className="w-full max-w-md rounded-2xl border p-8 text-center shadow-sm"
+        style={{
+          backgroundColor: 'var(--bg-surface)',
+          borderColor: 'var(--border-color)',
+        }}
+      >
+        <div
+          className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full"
+          style={{
+            backgroundColor: 'var(--bg-accent)',
+          }}
+        >
+          <Lock
+            className="h-7 w-7"
+            style={{ color: 'var(--primary)' }}
+          />
         </div>
 
-        <h1 className="text-2xl font-bold text-slate-900">
+        <h1
+          className="text-2xl font-bold"
+          style={{ color: 'var(--text-primary)' }}
+        >
           AI Insights are a Pro feature
         </h1>
 
-        <p className="mt-3 text-slate-600 leading-6">
+        <p
+          className="mt-3 leading-6"
+          style={{ color: 'var(--text-secondary)' }}
+        >
           Upgrade to Pro to unlock AI-powered campaign analysis,
           recommendations, performance insights, and optimization suggestions.
         </p>
 
         <button
           onClick={() => router.push('/pricing')}
-          className="mt-6 w-full rounded-xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white hover:bg-violet-700 transition"
+          className="mt-6 w-full rounded-xl px-5 py-3 text-sm font-semibold text-white transition"
+          style={{
+            backgroundColor: 'var(--primary)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--primary-hover)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--primary)';
+          }}
         >
           Upgrade to Pro
         </button>
 
         <button
           onClick={() => router.push('/dashboard/campaigns')}
-          className="mt-3 w-full rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+          className="mt-3 w-full rounded-xl border px-5 py-3 text-sm font-semibold transition"
+          style={{
+            backgroundColor: 'transparent',
+            borderColor: 'var(--border-color)',
+            color: 'var(--text-primary)',
+          }}
         >
           Back to Campaigns
         </button>
@@ -110,11 +214,22 @@ function ProLockedScreen() {
 
 function LoadingScreen() {
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+    <div
+      className="min-h-screen flex items-center justify-center"
+      style={{
+        backgroundColor: 'var(--bg-primary)',
+      }}
+    >
       <div className="flex flex-col items-center gap-3">
-        <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
+        <Loader2
+          className="h-8 w-8 animate-spin"
+          style={{ color: 'var(--primary)' }}
+        />
 
-        <p className="text-sm text-slate-500">
+        <p
+          className="text-sm"
+          style={{ color: 'var(--text-secondary)' }}
+        >
           Loading campaign...
         </p>
       </div>
@@ -132,31 +247,61 @@ function ErrorScreen({
   onRetry: () => void;
 }) {
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
-      <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-8 text-center">
-        <div className="mx-auto mb-5 w-14 h-14 rounded-full bg-red-100 flex items-center justify-center">
-          <AlertCircle className="w-7 h-7 text-red-600" />
+    <div
+      className="min-h-screen flex items-center justify-center px-6"
+      style={{
+        backgroundColor: 'var(--bg-primary)',
+      }}
+    >
+      <div
+        className="w-full max-w-md rounded-2xl border p-8 text-center shadow-sm"
+        style={{
+          backgroundColor: 'var(--bg-surface)',
+          borderColor: 'var(--border-color)',
+        }}
+      >
+        <div
+          className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full"
+          style={{
+            backgroundColor: 'var(--bg-accent)',
+          }}
+        >
+          <AlertCircle className="h-7 w-7 text-red-500" />
         </div>
 
-        <h1 className="text-xl font-bold text-slate-900">
+        <h1
+          className="text-xl font-bold"
+          style={{ color: 'var(--text-primary)' }}
+        >
           Unable to load campaign
         </h1>
 
-        <p className="mt-3 text-sm text-slate-600">
+        <p
+          className="mt-3 text-sm"
+          style={{ color: 'var(--text-secondary)' }}
+        >
           {message}
         </p>
 
         <div className="mt-6 flex gap-3">
           <button
             onClick={onBack}
-            className="flex-1 rounded-xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+            className="flex-1 rounded-xl border px-4 py-3 text-sm font-semibold transition"
+            style={{
+              borderColor: 'var(--border-color)',
+              color: 'var(--text-primary)',
+              backgroundColor: 'transparent',
+            }}
           >
             Back
           </button>
 
           <button
             onClick={onRetry}
-            className="flex-1 rounded-xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white hover:bg-violet-700 transition"
+            className="flex-1 rounded-xl px-4 py-3 text-sm font-semibold text-white transition"
+            style={{
+              backgroundColor: 'var(--primary)',
+            }}
           >
             Try Again
           </button>
@@ -173,58 +318,80 @@ function CampaignHeader({
   campaign: Campaign;
   onBack: () => void;
 }) {
-  const health =
-    campaign.health?.toLowerCase() || 'unknown';
+  const health = campaign.health?.toLowerCase() || 'unknown';
 
   const healthClass =
     health === 'good' || health === 'healthy'
-      ? 'bg-emerald-100 text-emerald-700'
+      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
       : health === 'warning' || health === 'average'
-        ? 'bg-amber-100 text-amber-700'
-        : 'bg-red-100 text-red-700';
+        ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
+        : 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400';
 
   return (
-    <div className="bg-white border-b border-slate-200">
-      <div className="max-w-7xl mx-auto px-6 py-5">
+    <div
+      className="border-b"
+      style={{
+        backgroundColor: 'var(--bg-surface)',
+        borderColor: 'var(--border-color)',
+      }}
+    >
+      <div className="mx-auto max-w-7xl px-6 py-5">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition"
+          className="flex items-center gap-2 text-sm transition"
+          style={{
+            color: 'var(--text-secondary)',
+          }}
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="h-4 w-4" />
           Back to Campaigns
         </button>
 
-        <div className="mt-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="mt-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-2xl font-bold text-slate-900">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1
+                className="text-2xl font-bold"
+                style={{ color: 'var(--text-primary)' }}
+              >
                 {campaign.name}
               </h1>
 
               <span
-                className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${healthClass}`}
+                className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${healthClass}`}
               >
                 {campaign.health || 'Unknown'}
               </span>
             </div>
 
-            <div className="mt-2 flex items-center gap-3 text-sm text-slate-500">
-              <span className="capitalize">
-                {campaign.status}
-              </span>
+            <div
+              className="mt-2 flex items-center gap-3 text-sm"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              <span className="capitalize">{campaign.status}</span>
 
               <span>•</span>
 
-              <span>
-                Campaign AI Insights
-              </span>
+              <span>Campaign AI Insights</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-50 border border-violet-100">
-            <Sparkles className="w-4 h-4 text-violet-600" />
+          <div
+            className="flex items-center gap-2 rounded-xl border px-4 py-2"
+            style={{
+              backgroundColor: 'var(--bg-accent)',
+              borderColor: 'var(--border-color)',
+            }}
+          >
+            <Sparkles
+              className="h-4 w-4"
+              style={{ color: 'var(--primary)' }}
+            />
 
-            <span className="text-sm font-semibold text-violet-700">
+            <span
+              className="text-sm font-semibold"
+              style={{ color: 'var(--primary)' }}
+            >
               AI Analysis
             </span>
           </div>
@@ -244,17 +411,32 @@ function MetricCard({
   description?: string;
 }) {
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-5">
-      <p className="text-sm text-slate-500">
+    <div
+      className="rounded-xl border p-5 transition"
+      style={{
+        backgroundColor: 'var(--bg-surface)',
+        borderColor: 'var(--border-color)',
+      }}
+    >
+      <p
+        className="text-sm"
+        style={{ color: 'var(--text-secondary)' }}
+      >
         {label}
       </p>
 
-      <p className="mt-2 text-2xl font-bold text-slate-900">
+      <p
+        className="mt-2 text-2xl font-bold"
+        style={{ color: 'var(--text-primary)' }}
+      >
         {value}
       </p>
 
       {description && (
-        <p className="mt-1 text-xs text-slate-400">
+        <p
+          className="mt-1 text-xs"
+          style={{ color: 'var(--text-secondary)' }}
+        >
           {description}
         </p>
       )}
@@ -268,7 +450,7 @@ function CampaignMetrics({
   campaign: Campaign;
 }) {
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
       <MetricCard
         label="Spend"
         value={`$${Number(campaign.spend || 0).toFixed(2)}`}
@@ -276,51 +458,37 @@ function CampaignMetrics({
 
       <MetricCard
         label="Clicks"
-        value={Number(
-          campaign.clicks || 0
-        ).toLocaleString()}
+        value={Number(campaign.clicks || 0).toLocaleString()}
       />
 
       <MetricCard
         label="CTR"
-        value={`${Number(
-          campaign.ctr || 0
-        ).toFixed(2)}%`}
+        value={`${Number(campaign.ctr || 0).toFixed(2)}%`}
       />
 
       <MetricCard
         label="CPC"
-        value={`$${Number(
-          campaign.cpc || 0
-        ).toFixed(2)}`}
+        value={`$${Number(campaign.cpc || 0).toFixed(2)}`}
       />
 
       <MetricCard
         label="ROAS"
-        value={`${Number(
-          campaign.roas || 0
-        ).toFixed(2)}x`}
+        value={`${Number(campaign.roas || 0).toFixed(2)}x`}
       />
 
       <MetricCard
         label="Conversions"
-        value={Number(
-          campaign.conversions || 0
-        ).toLocaleString()}
+        value={Number(campaign.conversions || 0).toLocaleString()}
       />
 
       <MetricCard
         label="Impressions"
-        value={Number(
-          campaign.impressions || 0
-        ).toLocaleString()}
+        value={Number(campaign.impressions || 0).toLocaleString()}
       />
 
       <MetricCard
         label="Frequency"
-        value={Number(
-          campaign.frequency || 0
-        ).toFixed(2)}
+        value={Number(campaign.frequency || 0).toFixed(2)}
       />
     </div>
   );
@@ -331,29 +499,39 @@ function InsightsSummary({
 }: {
   insights: Insights;
 }) {
-  const score = Number(
-    insights.healthScore || 0
-  );
+  const score = Number(insights.healthScore || 0);
 
   const scoreClass =
     score >= 80
-      ? 'text-emerald-600'
+      ? 'text-emerald-500'
       : score >= 60
-        ? 'text-amber-600'
-        : 'text-red-600';
+        ? 'text-amber-500'
+        : 'text-red-500';
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6">
-      <div className="flex flex-col md:flex-row md:items-center gap-6">
+    <div
+      className="rounded-2xl border p-6"
+      style={{
+        backgroundColor: 'var(--bg-surface)',
+        borderColor: 'var(--border-color)',
+      }}
+    >
+      <div className="flex flex-col gap-6 md:flex-row md:items-center">
         <div className="shrink-0">
-          <div className="w-28 h-28 rounded-full border-8 border-slate-100 flex flex-col items-center justify-center">
-            <span
-              className={`text-3xl font-bold ${scoreClass}`}
-            >
+          <div
+            className="flex h-28 w-28 flex-col items-center justify-center rounded-full border-8"
+            style={{
+              borderColor: 'var(--bg-accent)',
+            }}
+          >
+            <span className={`text-3xl font-bold ${scoreClass}`}>
               {score}
             </span>
 
-            <span className="text-xs text-slate-400">
+            <span
+              className="text-xs"
+              style={{ color: 'var(--text-secondary)' }}
+            >
               Health Score
             </span>
           </div>
@@ -361,16 +539,24 @@ function InsightsSummary({
 
         <div>
           <div className="flex items-center gap-2">
-            <Brain className="w-5 h-5 text-violet-600" />
+            <Brain
+              className="h-5 w-5"
+              style={{ color: 'var(--primary)' }}
+            />
 
-            <h2 className="text-lg font-bold text-slate-900">
+            <h2
+              className="text-lg font-bold"
+              style={{ color: 'var(--text-primary)' }}
+            >
               AI Campaign Summary
             </h2>
           </div>
 
-          <p className="mt-3 text-slate-600 leading-7">
-            {insights.summary ||
-              'No summary available.'}
+          <p
+            className="mt-3 leading-7"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            {insights.summary || 'No summary available.'}
           </p>
         </div>
       </div>
@@ -384,71 +570,101 @@ function InsightsAnalysisGrid({
   insights: Insights;
 }) {
   return (
-    <div className="grid lg:grid-cols-2 gap-6">
-      <div className="bg-white rounded-2xl border border-slate-200 p-6">
+    <div className="grid gap-6 lg:grid-cols-2">
+      <div
+        className="rounded-2xl border p-6"
+        style={{
+          backgroundColor: 'var(--bg-surface)',
+          borderColor: 'var(--border-color)',
+        }}
+      >
         <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center">
-            <TrendingUp className="w-5 h-5 text-emerald-600" />
+          <div
+            className="flex h-9 w-9 items-center justify-center rounded-lg"
+            style={{
+              backgroundColor: 'var(--bg-accent)',
+            }}
+          >
+            <TrendingUp className="h-5 w-5 text-emerald-500" />
           </div>
 
-          <h2 className="text-lg font-bold text-slate-900">
+          <h2
+            className="text-lg font-bold"
+            style={{ color: 'var(--text-primary)' }}
+          >
             What is working
           </h2>
         </div>
 
         <div className="mt-5 space-y-3">
           {insights.whatIsWorking?.length ? (
-            insights.whatIsWorking.map(
-              (item, index) => (
-                <div
-                  key={index}
-                  className="flex gap-3"
-                >
-                  <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+            insights.whatIsWorking.map((item, index) => (
+              <div key={index} className="flex gap-3">
+                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-500" />
 
-                  <p className="text-sm text-slate-600 leading-6">
-                    {item}
-                  </p>
-                </div>
-              )
-            )
+                <p
+                  className="text-sm leading-6"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  {item}
+                </p>
+              </div>
+            ))
           ) : (
-            <p className="text-sm text-slate-500">
+            <p
+              className="text-sm"
+              style={{ color: 'var(--text-secondary)' }}
+            >
               No positive insights available.
             </p>
           )}
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 p-6">
+      <div
+        className="rounded-2xl border p-6"
+        style={{
+          backgroundColor: 'var(--bg-surface)',
+          borderColor: 'var(--border-color)',
+        }}
+      >
         <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-lg bg-red-100 flex items-center justify-center">
-            <TrendingDown className="w-5 h-5 text-red-600" />
+          <div
+            className="flex h-9 w-9 items-center justify-center rounded-lg"
+            style={{
+              backgroundColor: 'var(--bg-accent)',
+            }}
+          >
+            <TrendingDown className="h-5 w-5 text-red-500" />
           </div>
 
-          <h2 className="text-lg font-bold text-slate-900">
+          <h2
+            className="text-lg font-bold"
+            style={{ color: 'var(--text-primary)' }}
+          >
             What needs fixing
           </h2>
         </div>
 
         <div className="mt-5 space-y-3">
           {insights.whatNeedsFixing?.length ? (
-            insights.whatNeedsFixing.map(
-              (item, index) => (
-                <div
-                  key={index}
-                  className="flex gap-3"
-                >
-                  <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+            insights.whatNeedsFixing.map((item, index) => (
+              <div key={index} className="flex gap-3">
+                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
 
-                  <p className="text-sm text-slate-600 leading-6">
-                    {item}
-                  </p>
-                </div>
-              )
-            )
+                <p
+                  className="text-sm leading-6"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  {item}
+                </p>
+              </div>
+            ))
           ) : (
-            <p className="text-sm text-slate-500">
+            <p
+              className="text-sm"
+              style={{ color: 'var(--text-secondary)' }}
+            >
               No issues identified.
             </p>
           )}
@@ -464,58 +680,93 @@ function RecommendedActionsList({
   insights: Insights;
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6">
+    <div
+      className="rounded-2xl border p-6"
+      style={{
+        backgroundColor: 'var(--bg-surface)',
+        borderColor: 'var(--border-color)',
+      }}
+    >
       <div className="flex items-center gap-2">
-        <Sparkles className="w-5 h-5 text-violet-600" />
+        <Sparkles
+          className="h-5 w-5"
+          style={{ color: 'var(--primary)' }}
+        />
 
-        <h2 className="text-lg font-bold text-slate-900">
+        <h2
+          className="text-lg font-bold"
+          style={{ color: 'var(--text-primary)' }}
+        >
           Recommended Actions
         </h2>
       </div>
 
       <div className="mt-5 space-y-4">
         {insights.recommendedActions?.length ? (
-          insights.recommendedActions.map(
-            (action) => (
-              <div
-                key={action.id}
-                className="rounded-xl border border-slate-200 p-5"
-              >
-                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-semibold text-slate-900">
-                        {action.title}
-                      </h3>
+          insights.recommendedActions.map((action) => (
+            <div
+              key={action.id}
+              className="rounded-xl border p-5"
+              style={{
+                borderColor: 'var(--border-color)',
+                backgroundColor: 'var(--bg-surface)',
+              }}
+            >
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3
+                      className="font-semibold"
+                      style={{ color: 'var(--text-primary)' }}
+                    >
+                      {action.title}
+                    </h3>
 
-                      {action.applied && (
-                        <span className="px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold">
-                          Applied
-                        </span>
-                      )}
-                    </div>
-
-                    <p className="mt-2 text-sm text-slate-600 leading-6">
-                      {action.description}
-                    </p>
+                    {action.applied && (
+                      <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
+                        Applied
+                      </span>
+                    )}
                   </div>
 
-                  <div className="flex gap-2 shrink-0">
-                    <span className="px-3 py-1 rounded-full bg-violet-50 text-violet-700 text-xs font-semibold">
-                      Impact: {action.impact}
-                    </span>
+                  <p
+                    className="mt-2 text-sm leading-6"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    {action.description}
+                  </p>
+                </div>
 
-                    <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">
-                      Effort: {action.effort}
-                    </span>
-                  </div>
+                <div className="flex shrink-0 gap-2">
+                  <span
+                    className="rounded-full px-3 py-1 text-xs font-semibold"
+                    style={{
+                      backgroundColor: 'var(--bg-accent)',
+                      color: 'var(--primary)',
+                    }}
+                  >
+                    Impact: {action.impact}
+                  </span>
+
+                  <span
+                    className="rounded-full px-3 py-1 text-xs font-semibold"
+                    style={{
+                      backgroundColor: 'var(--bg-accent)',
+                      color: 'var(--text-secondary)',
+                    }}
+                  >
+                    Effort: {action.effort}
+                  </span>
                 </div>
               </div>
-            )
-          )
+            </div>
+          ))
         ) : (
           <div className="py-8 text-center">
-            <p className="text-sm text-slate-500">
+            <p
+              className="text-sm"
+              style={{ color: 'var(--text-secondary)' }}
+            >
               No recommendations available.
             </p>
           </div>
@@ -531,178 +782,128 @@ function InsightsContent() {
 
   const campaignId = searchParams.get('id');
 
-  const [plan, setPlan] =
-    useState<'FREE' | 'PRO' | null>(null);
+  const [plan, setPlan] = useState<'FREE' | 'PRO' | null>(null);
+  const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [insights, setInsights] = useState<Insights | null>(null);
 
-  const [campaign, setCampaign] =
-    useState<Campaign | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadingInsights, setLoadingInsights] = useState(false);
 
-  const [insights, setInsights] =
-    useState<Insights | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [insightsError, setInsightsError] = useState<string | null>(null);
 
-  const [loading, setLoading] =
-    useState(true);
+  const [reanalyzing, setReanalyzing] = useState(false);
 
-  const [loadingInsights, setLoadingInsights] =
-    useState(false);
+  const loadInsights = useCallback(async (id: string) => {
+    setLoadingInsights(true);
+    setInsightsError(null);
 
-  const [error, setError] =
-    useState<string | null>(null);
+    try {
+      const response = await apiClient.get<InsightsResponse>(
+        `/dashboard/campaigns/${id}/ai-insights`
+      );
 
-  const [insightsError, setInsightsError] =
-    useState<string | null>(null);
+      const data = response.data;
 
-  const [reanalyzing, setReanalyzing] =
-    useState(false);
-
-  const loadInsights = useCallback(
-    async (id: string) => {
-      setLoadingInsights(true);
-      setInsightsError(null);
-
-      try {
-        const response =
-          await apiClient.get<InsightsResponse>(
-            `/dashboard/campaigns/${id}/ai-insights`
-          );
-
-        const data = response.data;
-
-        if (
-          !data.success ||
-          !data.data
-        ) {
-          throw new Error(
-            data.message ||
-              'Unable to generate campaign insights.'
-          );
-        }
-
-        setInsights(data.data);
-      } catch (err: any) {
-        const status =
-          err?.response?.status;
-
-        const errorCode =
-          err?.response?.data?.code;
-
-        if (
-          status === 403 ||
-          errorCode === 'PRO_REQUIRED'
-        ) {
-          setPlan('FREE');
-          setCampaign(null);
-          setInsights(null);
-          return;
-        }
-
-        setInsightsError(
-          err?.response?.data?.message ||
-            err?.message ||
-            'Unable to load AI insights.'
+      if (!data.success || !data.data) {
+        throw new Error(
+          data.message || 'Unable to generate campaign insights.'
         );
-      } finally {
-        setLoadingInsights(false);
       }
-    },
-    []
-  );
 
-  const loadCampaign = useCallback(
-    async () => {
-      setLoading(true);
-      setError(null);
+      setInsights(data.data);
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const errorCode = err?.response?.data?.code;
+
+      if (status === 403 || errorCode === 'PRO_REQUIRED') {
+        setPlan('FREE');
+        setCampaign(null);
+        setInsights(null);
+        return;
+      }
+
+      setInsightsError(
+        err?.response?.data?.message ||
+          err?.message ||
+          'Unable to load AI insights.'
+      );
+    } finally {
+      setLoadingInsights(false);
+    }
+  }, []);
+
+  const loadCampaign = useCallback(async () => {
+    if (!campaignId) {
+      setLoading(false);
+      setPlan('PRO');
+      setCampaign(null);
       setInsights(null);
-      setInsightsError(null);
+      return;
+    }
 
-      try {
-        const userResponse =
-          await apiClient.get<UserResponse>(
-            '/auth/me'
-          );
+    setLoading(true);
+    setError(null);
+    setInsights(null);
+    setInsightsError(null);
 
-        const userData =
-          userResponse.data;
+    try {
+      const userResponse = await apiClient.get<UserResponse>('/auth/me');
 
-        if (
-          !userData.success ||
-          !userData.data
-        ) {
-          throw new Error(
-            userData.message ||
-              'Unable to load user information.'
-          );
-        }
+      const userData = userResponse.data;
 
-        const userPlan =
-          userData.data.plan;
+      if (!userData.success || !userData.data) {
+        throw new Error(
+          userData.message || 'Unable to load user information.'
+        );
+      }
 
-        setPlan(userPlan);
+      const userPlan = userData.data.plan;
 
-        if (userPlan !== 'PRO') {
-          setCampaign(null);
-          setInsights(null);
-          setLoading(false);
-          return;
-        }
+      setPlan(userPlan);
 
-        if (!campaignId) {
-          throw new Error(
-            'Campaign ID is missing.'
-          );
-        }
+      if (userPlan !== 'PRO') {
+        setCampaign(null);
+        setInsights(null);
+        return;
+      }
 
-        const campaignResponse =
-          await apiClient.get<CampaignResponse>(
-            `/dashboard/campaigns/${campaignId}`
-          );
-
-        const response =
-          campaignResponse.data;
-
-        if (
-          !response.success ||
-          !response.data
-        ) {
-          throw new Error(
-            response.message ||
-              'Campaign not found.'
-          );
-        }
-
-        setCampaign(response.data);
-
-        setLoading(false);
-
-        loadInsights(campaignId);
-      } catch (err: any) {
-        const status =
-          err?.response?.status;
-
-        const errorCode =
-          err?.response?.data?.code;
-
-        if (
-          status === 403 ||
-          errorCode === 'PRO_REQUIRED'
-        ) {
-          setPlan('FREE');
-          setCampaign(null);
-          setInsights(null);
-          return;
-        }
-
-        setError(
-          err?.response?.data?.message ||
-            err?.message ||
-            'Unable to load campaign.'
+      const campaignResponse =
+        await apiClient.get<CampaignResponse>(
+          `/dashboard/campaigns/${campaignId}`
         );
 
-        setLoading(false);
+      const response = campaignResponse.data;
+
+      if (!response.success || !response.data) {
+        setCampaign(null);
+        setInsights(null);
+        return;
       }
-    },
-    [campaignId, loadInsights]
-  );
+
+      setCampaign(response.data);
+
+      await loadInsights(campaignId);
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const errorCode = err?.response?.data?.code;
+
+      if (status === 403 || errorCode === 'PRO_REQUIRED') {
+        setPlan('FREE');
+        setCampaign(null);
+        setInsights(null);
+        return;
+      }
+
+      setError(
+        err?.response?.data?.message ||
+          err?.message ||
+          'Unable to load campaign.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [campaignId, loadInsights]);
 
   useEffect(() => {
     loadCampaign();
@@ -722,32 +923,21 @@ function InsightsContent() {
           `/dashboard/campaigns/${campaignId}/ai-insights`
         );
 
-      const data =
-        response.data;
+      const data = response.data;
 
-      if (
-        !data.success ||
-        !data.data
-      ) {
+      if (!data.success || !data.data) {
         throw new Error(
-          data.message ||
-            'Unable to re-analyze campaign.'
+          data.message || 'Unable to re-analyze campaign.'
         );
       }
 
       setInsights(data.data);
       setInsightsError(null);
     } catch (err: any) {
-      const status =
-        err?.response?.status;
+      const status = err?.response?.status;
+      const errorCode = err?.response?.data?.code;
 
-      const errorCode =
-        err?.response?.data?.code;
-
-      if (
-        status === 403 ||
-        errorCode === 'PRO_REQUIRED'
-      ) {
+      if (status === 403 || errorCode === 'PRO_REQUIRED') {
         setPlan('FREE');
         setCampaign(null);
         setInsights(null);
@@ -764,6 +954,10 @@ function InsightsContent() {
     }
   };
 
+  if (!campaignId) {
+    return <NoCampaignScreen />;
+  }
+
   if (loading || plan === null) {
     return <LoadingScreen />;
   }
@@ -776,103 +970,130 @@ function InsightsContent() {
     return (
       <ErrorScreen
         message={error}
-        onBack={() =>
-          router.push(
-            '/dashboard/campaigns'
-          )
-        }
+        onBack={() => router.push('/dashboard/campaigns')}
         onRetry={loadCampaign}
       />
     );
   }
 
   if (!campaign) {
-    return (
-      <ErrorScreen
-        message="Campaign data could not be found."
-        onBack={() =>
-          router.push(
-            '/dashboard/campaigns'
-          )
-        }
-        onRetry={loadCampaign}
-      />
-    );
+    return <NoCampaignScreen />;
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div
+      className="min-h-screen"
+      style={{
+        backgroundColor: 'var(--bg-primary)',
+      }}
+    >
       <CampaignHeader
         campaign={campaign}
-        onBack={() =>
-          router.push(
-            '/dashboard/campaigns'
-          )
-        }
+        onBack={() => router.push('/dashboard/campaigns')}
       />
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        <CampaignMetrics
-          campaign={campaign}
-        />
+      <main className="mx-auto max-w-7xl px-6 py-8">
+        <CampaignMetrics campaign={campaign} />
 
         <div className="mt-8">
           {loadingInsights ? (
-            <div className="bg-white rounded-2xl border border-slate-200 p-10">
+            <div
+              className="rounded-2xl border p-10"
+              style={{
+                backgroundColor: 'var(--bg-surface)',
+                borderColor: 'var(--border-color)',
+              }}
+            >
               <div className="flex flex-col items-center justify-center">
-                <div className="w-14 h-14 rounded-full bg-violet-100 flex items-center justify-center">
-                  <Brain className="w-7 h-7 text-violet-600 animate-pulse" />
+                <div
+                  className="flex h-14 w-14 items-center justify-center rounded-full"
+                  style={{
+                    backgroundColor: 'var(--bg-accent)',
+                  }}
+                >
+                  <Brain
+                    className="h-7 w-7 animate-pulse"
+                    style={{ color: 'var(--primary)' }}
+                  />
                 </div>
 
-                <h2 className="mt-5 text-lg font-bold text-slate-900">
+                <h2
+                  className="mt-5 text-lg font-bold"
+                  style={{ color: 'var(--text-primary)' }}
+                >
                   AI is analyzing your campaign
                 </h2>
 
-                <p className="mt-2 text-sm text-slate-500 text-center max-w-md">
-                  We're analyzing your campaign performance
-                  and generating personalized recommendations.
+                <p
+                  className="mt-2 max-w-md text-center text-sm"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  We're analyzing your campaign performance and generating
+                  personalized recommendations.
                 </p>
 
-                <Loader2 className="mt-5 w-5 h-5 animate-spin text-violet-600" />
+                <Loader2
+                  className="mt-5 h-5 w-5 animate-spin"
+                  style={{ color: 'var(--primary)' }}
+                />
               </div>
             </div>
           ) : insightsError ? (
-            <div className="bg-white rounded-2xl border border-red-200 p-8 text-center">
-              <AlertCircle className="mx-auto w-8 h-8 text-red-500" />
+            <div
+              className="rounded-2xl border p-8 text-center"
+              style={{
+                backgroundColor: 'var(--bg-surface)',
+                borderColor: 'var(--border-color)',
+              }}
+            >
+              <AlertCircle className="mx-auto h-8 w-8 text-red-500" />
 
-              <h2 className="mt-4 text-lg font-bold text-slate-900">
+              <h2
+                className="mt-4 text-lg font-bold"
+                style={{ color: 'var(--text-primary)' }}
+              >
                 AI insights unavailable
               </h2>
 
-              <p className="mt-2 text-sm text-slate-500">
+              <p
+                className="mt-2 text-sm"
+                style={{ color: 'var(--text-secondary)' }}
+              >
                 {insightsError}
               </p>
 
               <button
                 onClick={handleReAnalyze}
                 disabled={reanalyzing}
-                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50 transition"
+                className="mt-5 inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition disabled:opacity-50"
+                style={{
+                  backgroundColor: 'var(--primary)',
+                }}
               >
                 {reanalyzing ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <RefreshCw className="w-4 h-4" />
+                  <RefreshCw className="h-4 w-4" />
                 )}
 
-                {reanalyzing
-                  ? 'Analyzing...'
-                  : 'Analyze Campaign'}
+                {reanalyzing ? 'Analyzing...' : 'Analyze Campaign'}
               </button>
             </div>
           ) : insights ? (
             <div className="space-y-6">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900">
+                  <h2
+                    className="text-xl font-bold"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
                     Campaign AI Insights
                   </h2>
 
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p
+                    className="mt-1 text-sm"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
                     AI-powered analysis and recommendations
                   </p>
                 </div>
@@ -880,54 +1101,68 @@ function InsightsContent() {
                 <button
                   onClick={handleReAnalyze}
                   disabled={reanalyzing}
-                  className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 transition"
+                  className="inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50"
+                  style={{
+                    backgroundColor: 'var(--bg-surface)',
+                    borderColor: 'var(--border-color)',
+                    color: 'var(--text-primary)',
+                  }}
                 >
                   {reanalyzing ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    <RefreshCw className="w-4 h-4" />
+                    <RefreshCw className="h-4 w-4" />
                   )}
 
-                  {reanalyzing
-                    ? 'Re-analyzing...'
-                    : 'Re-analyze'}
+                  {reanalyzing ? 'Re-analyzing...' : 'Re-analyze'}
                 </button>
               </div>
 
-              <InsightsSummary
-                insights={insights}
-              />
+              <InsightsSummary insights={insights} />
 
-              <InsightsAnalysisGrid
-                insights={insights}
-              />
+              <InsightsAnalysisGrid insights={insights} />
 
-              <RecommendedActionsList
-                insights={insights}
-              />
+              <RecommendedActionsList insights={insights} />
             </div>
           ) : (
-            <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
-              <Brain className="mx-auto w-8 h-8 text-slate-400" />
+            <div
+              className="rounded-2xl border p-8 text-center"
+              style={{
+                backgroundColor: 'var(--bg-surface)',
+                borderColor: 'var(--border-color)',
+              }}
+            >
+              <Brain
+                className="mx-auto h-8 w-8"
+                style={{ color: 'var(--text-secondary)' }}
+              />
 
-              <h2 className="mt-4 text-lg font-bold text-slate-900">
+              <h2
+                className="mt-4 text-lg font-bold"
+                style={{ color: 'var(--text-primary)' }}
+              >
                 No AI insights available
               </h2>
 
-              <p className="mt-2 text-sm text-slate-500">
-                Run an AI analysis to generate insights
-                for this campaign.
+              <p
+                className="mt-2 text-sm"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                Run an AI analysis to generate insights for this campaign.
               </p>
 
               <button
                 onClick={handleReAnalyze}
                 disabled={reanalyzing}
-                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50 transition"
+                className="mt-5 inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition disabled:opacity-50"
+                style={{
+                  backgroundColor: 'var(--primary)',
+                }}
               >
                 {reanalyzing ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Sparkles className="w-4 h-4" />
+                  <Sparkles className="h-4 w-4" />
                 )}
 
                 {reanalyzing
@@ -943,5 +1178,9 @@ function InsightsContent() {
 }
 
 export default function CampaignInsightsPage() {
-  return <InsightsContent />;
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      <InsightsContent />
+    </Suspense>
+  );
 }

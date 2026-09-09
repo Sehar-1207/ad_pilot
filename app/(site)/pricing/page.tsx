@@ -4,7 +4,11 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Check, Sparkles, Zap, RefreshCw } from "lucide-react";
 import { getPlans } from "@/api/plan";
-import apiClient from "@/api/client";
+import {
+  getSubscription,
+  createCheckoutSession,
+} from "@/api/subscription";
+import { toast } from "react-toastify";
 
 interface PlanFeature {
   text: string;
@@ -43,10 +47,12 @@ export default function PricingPage() {
   const [plans, setPlans] = useState<PricingPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [currentPlan, setCurrentPlan] = useState<string>("FREE");
   const [error, setError] = useState("");
 
   useEffect(() => {
     loadPlans();
+    loadSubscription();
   }, []);
 
   const loadPlans = async () => {
@@ -91,9 +97,27 @@ export default function PricingPage() {
     }
   };
 
+  const loadSubscription = async () => {
+    try {
+      const response = await getSubscription();
+
+      const plan =
+        response?.subscription?.plan?.toUpperCase() || "FREE";
+
+      setCurrentPlan(plan);
+    } catch {
+      setCurrentPlan("FREE");
+    }
+  };
+
   const handlePlanClick = async (plan: PricingPlan) => {
     if (plan.slug.toLowerCase() !== "pro") {
       window.location.href = "/login";
+      return;
+    }
+
+    if (currentPlan === "PRO") {
+      toast.info("You're already on the Pro plan.");
       return;
     }
 
@@ -101,13 +125,13 @@ export default function PricingPage() {
       setCheckoutLoading(plan.id);
       setError("");
 
-      const response = await apiClient.post("/subscriptions/checkout");
+      const response = await createCheckoutSession();
 
       const checkoutUrl =
-        response.data?.checkoutUrl ||
-        response.data?.url ||
-        response.data?.data?.checkoutUrl ||
-        response.data?.data?.url;
+        response?.checkoutUrl ||
+        response?.url ||
+        response?.data?.checkoutUrl ||
+        response?.data?.url;
 
       if (!checkoutUrl) {
         throw new Error("Stripe checkout URL was not returned.");
@@ -169,6 +193,7 @@ export default function PricingPage() {
           {plans.map((plan) => {
             const isPro = plan.slug.toLowerCase() === "pro";
             const isCheckingOut = checkoutLoading === plan.id;
+            const isCurrentPlan = isPro && currentPlan === "PRO";
 
             return (
               <div
@@ -234,13 +259,21 @@ export default function PricingPage() {
                     type="button"
                     onClick={() => handlePlanClick(plan)}
                     disabled={isCheckingOut}
-                    className="w-full py-3.5 px-6 rounded-2xl text-sm font-semibold text-center transition-all duration-200 block bg-gradient-to-r from-[#3B82F6] to-[#2DD4BF] text-white hover:opacity-95 shadow-md shadow-[#3B82F6]/20 group-hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                    className={`w-full py-3.5 px-6 rounded-2xl text-sm font-semibold text-center transition-all duration-200 block disabled:cursor-not-allowed ${
+                      isCurrentPlan
+                        ? "bg-[#2DD4BF]/15 text-[#2DD4BF] border border-[#2DD4BF]/40"
+                        : "bg-gradient-to-r from-[#3B82F6] to-[#2DD4BF] text-white hover:opacity-95 shadow-md shadow-[#3B82F6]/20 group-hover:shadow-lg"
+                    } ${
+                      isCheckingOut ? "opacity-60" : ""
+                    }`}
                   >
                     {isCheckingOut ? (
                       <span className="flex items-center justify-center gap-2">
                         <RefreshCw className="w-4 h-4 animate-spin" />
                         Redirecting to Stripe...
                       </span>
+                    ) : isCurrentPlan ? (
+                      "You're on Pro"
                     ) : (
                       plan.buttonText
                     )}
