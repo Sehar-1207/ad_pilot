@@ -31,29 +31,51 @@ export default function UsersTable({
       }}
       className="border rounded-xl overflow-hidden transition-colors shadow-sm"
     >
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-xs">
+      <div className="h-[300px] overflow-y-auto overflow-x-auto">
+        <table className="w-full min-w-[1000px] text-left text-xs">
           <thead
             style={{
               backgroundColor: 'var(--bg-primary)',
               borderColor: 'var(--border-color)',
               color: 'var(--text-primary)',
             }}
-            className="border-b uppercase tracking-wider font-semibold opacity-70"
+            className="border-b uppercase tracking-wider font-semibold sticky top-0 z-10"
           >
             <tr>
-              <th className="px-6 py-3.5">User Details</th>
-              <th className="px-6 py-3.5">Subscription Plan</th>
-              <th className="px-6 py-3.5">Meta Ads Integration</th>
-              <th className="px-6 py-3.5">Monthly Ad Spend</th>
-              <th className="px-6 py-3.5">AI Insights Used</th>
-              <th className="px-6 py-3.5">Joined</th>
-              <th className="px-6 py-3.5 text-right">Actions</th>
+              <th className="px-6 py-4.5 bg-[var(--bg-primary)]">
+                User Details
+              </th>
+
+              <th className="px-6 py-4.5 bg-[var(--bg-primary)]">
+                Subscription Plan
+              </th>
+
+              <th className="px-6 py-4.5 bg-[var(--bg-primary)]">
+                Meta Ads Integration
+              </th>
+
+              <th className="px-6 py-4.5 bg-[var(--bg-primary)]">
+                Monthly Ad Spend
+              </th>
+
+              <th className="px-6 py-4.5 bg-[var(--bg-primary)]">
+                AI Insights Used
+              </th>
+
+              <th className="px-6 py-4.5 bg-[var(--bg-primary)]">
+                Joined
+              </th>
+
+              <th className="px-6 py-4.5 text-right bg-[var(--bg-primary)]">
+                Actions
+              </th>
             </tr>
           </thead>
 
           <tbody
-            style={{ color: 'var(--text-primary)' }}
+            style={{
+              color: 'var(--text-primary)',
+            }}
             className="divide-y divide-[var(--border-color)]"
           >
             {users.length === 0 ? (
@@ -71,7 +93,6 @@ export default function UsersTable({
                   key={user.id}
                   className="hover:bg-[var(--bg-accent)] transition-colors"
                 >
-                  {/* User Details */}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div
@@ -97,7 +118,6 @@ export default function UsersTable({
                     </div>
                   </td>
 
-                  {/* Subscription Plan */}
                   <td className="px-6 py-4">
                     <span
                       style={
@@ -125,7 +145,6 @@ export default function UsersTable({
                     </span>
                   </td>
 
-                  {/* Meta Ads Integration */}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <span
@@ -148,26 +167,24 @@ export default function UsersTable({
                     </div>
                   </td>
 
-                  {/* Monthly Spend */}
                   <td className="px-6 py-4 font-mono font-medium">
                     {user.monthlySpend}
                   </td>
 
-                  {/* Gemini Requests */}
                   <td className="px-6 py-4 font-mono opacity-70">
                     {user.geminiRequests.toLocaleString()} reqs
                   </td>
 
-                  {/* Joined Date */}
                   <td className="px-6 py-4 opacity-70">
                     {user.joinedDate}
                   </td>
 
-                  {/* Actions */}
                   <td className="px-6 py-4 text-right">
                     <UserActionsDropdown
                       currentPlan={user.plan}
-                      onTogglePlan={() => onUpdatePlan(user.id)}
+                      onTogglePlan={() =>
+                        onUpdatePlan(user.id)
+                      }
                     />
                   </td>
                 </tr>

@@ -1,99 +1,66 @@
-'use client';
+"use client";
 
-import { CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Sparkles, TrendingUp } from "lucide-react";
+import { Campaign } from "@/types/insights";
+import { getHealthClasses, getHealthLabel } from "@/types/utils";
 
-interface InsightsAnalysisGridProps {
-  whatIsWorking?: string[];
-  whatNeedsFixing?: string[];
-}
+type Props = {
+  campaign: Campaign;
+  answer: string;
+  generatedAt?: string;
+};
 
-export function InsightsAnalysisGrid({
-  whatIsWorking = [],
-  whatNeedsFixing = [],
-}: InsightsAnalysisGridProps) {
+export default function AIAnalysisCard({
+  campaign,
+  answer,
+  generatedAt,
+}: Props) {
+  const healthClasses = getHealthClasses(campaign.health);
+
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-      <div
-        style={{
-          backgroundColor: 'var(--card-bg)',
-          borderColor: 'var(--border-color)',
-        }}
-        className="space-y-3 rounded-xl border p-5"
-      >
-        <div
-          style={{ color: 'var(--accent-teal)' }}
-          className="flex items-center gap-2 text-sm font-bold"
-        >
-          <CheckCircle2 className="h-5 w-5" />
-          What's Working Well
+    <div className="rounded-2xl border border-gray-200 bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-gray-100 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50">
+            <Sparkles className="h-5 w-5 text-indigo-600" />
+          </div>
+
+          <div>
+            <h2 className="text-base font-semibold text-gray-900">
+              AI Performance Analysis
+            </h2>
+
+            <p className="text-xs text-gray-500">
+              Analysis for {campaign.name}
+            </p>
+          </div>
         </div>
 
-        {whatIsWorking.length > 0 ? (
-          <ul className="space-y-2.5">
-            {whatIsWorking.map((item, index) => (
-              <li
-                key={`${item}-${index}`}
-                style={{
-                  borderColor: 'var(--border-color)',
-                  color: 'var(--text-primary)',
-                }}
-                className="flex items-start gap-2.5 rounded-lg border p-2.5 text-xs"
-              >
-                <span
-                  className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: 'var(--accent-teal)' }}
-                />
-
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p
-            style={{ color: 'var(--text-secondary)' }}
-            className="rounded-lg border border-[var(--border-color)] p-3 text-xs"
-          >
-            No positive findings are available yet.
-          </p>
-        )}
+        <span
+          className={`inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${healthClasses.badge}`}
+        >
+          <span
+            className={`h-1.5 w-1.5 rounded-full ${healthClasses.dot}`}
+          />
+          {getHealthLabel(campaign.health)}
+        </span>
       </div>
 
-      <div
-        style={{
-          backgroundColor: 'var(--card-bg)',
-          borderColor: 'var(--border-color)',
-        }}
-        className="space-y-3 rounded-xl border p-5"
-      >
-        <div className="flex items-center gap-2 text-sm font-bold text-rose-500">
-          <AlertTriangle className="h-5 w-5" />
-          What Needs Attention
+      <div className="p-5">
+        <div className="whitespace-pre-wrap text-sm leading-7 text-gray-700">
+          {answer}
         </div>
 
-        {whatNeedsFixing.length > 0 ? (
-          <ul className="space-y-2.5">
-            {whatNeedsFixing.map((item, index) => (
-              <li
-                key={`${item}-${index}`}
-                style={{
-                  borderColor: 'var(--border-color)',
-                  color: 'var(--text-primary)',
-                }}
-                className="flex items-start gap-2.5 rounded-lg border p-2.5 text-xs"
-              >
-                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-rose-500" />
+        {generatedAt && (
+          <div className="mt-5 flex items-center gap-2 border-t border-gray-100 pt-4 text-xs text-gray-400">
+            <TrendingUp className="h-3.5 w-3.5" />
 
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p
-            style={{ color: 'var(--text-secondary)' }}
-            className="rounded-lg border border-[var(--border-color)] p-3 text-xs"
-          >
-            No issues have been identified.
-          </p>
+            Generated{" "}
+            {new Date(generatedAt).toLocaleString(undefined, {
+              dateStyle: "medium",
+              timeStyle: "short",
+            })}
+          </div>
         )}
       </div>
     </div>

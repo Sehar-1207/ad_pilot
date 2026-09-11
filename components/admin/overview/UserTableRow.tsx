@@ -1,4 +1,3 @@
-
 import { MoreVertical } from 'lucide-react';
 
 export interface AdminUser {
@@ -17,8 +16,8 @@ interface UserTableRowProps {
 
 export default function UserTableRow({ user }: UserTableRowProps) {
   return (
-    <tr className="hover:bg-[var(--bg-accent)] transition-colors">
-      <td className="px-6 py-4">
+    <tr className="hover:bg-[var(--bg-accent)] transition-colors bg-transparent">
+      <td className="px-6 py-4 whitespace-nowrap">
         <div
           style={{ color: 'var(--text-primary)' }}
           className="font-bold text-xs sm:text-sm"
@@ -34,7 +33,7 @@ export default function UserTableRow({ user }: UserTableRowProps) {
         </div>
       </td>
 
-      <td className="px-6 py-4">
+      <td className="px-6 py-4 whitespace-nowrap">
         <span
           style={
             user.plan === 'Pro'
@@ -55,7 +54,7 @@ export default function UserTableRow({ user }: UserTableRowProps) {
         </span>
       </td>
 
-      <td className="px-6 py-4">
+      <td className="px-6 py-4 whitespace-nowrap">
         <span
           style={{ color: 'var(--text-primary)' }}
           className="flex items-center gap-2 text-xs font-medium"
@@ -76,12 +75,12 @@ export default function UserTableRow({ user }: UserTableRowProps) {
 
       <td
         style={{ color: 'var(--text-primary)' }}
-        className="px-6 py-4 font-mono font-bold text-xs"
+        className="px-6 py-4 whitespace-nowrap font-mono font-bold text-xs"
       >
         {user.spend}
       </td>
 
-      <td className="px-6 py-4 text-right">
+      <td className="px-6 py-4 whitespace-nowrap text-right">
         <button
           type="button"
           style={{ color: 'var(--text-primary)' }}

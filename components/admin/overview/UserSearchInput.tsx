@@ -7,24 +7,28 @@ interface UserSearchInputProps {
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-export default function UserSearchInput({ value, onChange }: UserSearchInputProps) {
+export default function UserSearchInput({
+  value,
+  onChange,
+}: UserSearchInputProps) {
   return (
     <div className="relative w-full md:w-64">
       <Search
         style={{ color: 'var(--text-secondary)' }}
-        className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2"
+        className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
       />
+
       <input
         type="text"
-        value={value}
+        value={value ?? ''}
         onChange={onChange}
         placeholder="Search user or email..."
         style={{
-          backgroundColor: 'var(--bg-surface)',
+          backgroundColor: 'transparent',
           borderColor: 'var(--border-color)',
           color: 'var(--text-primary)',
         }}
-        className="w-full border rounded-lg pl-9 pr-3 py-1.5 text-xs transition-colors focus:outline-none focus:border-[var(--primary)] placeholder:text-[var(--text-secondary)]"
+        className="w-full border rounded-lg pl-9 pr-3 py-1.5 text-xs transition-colors focus:outline-none focus:border-[var(--primary)] placeholder:text-[var(--text-secondary)] bg-transparent"
       />
     </div>
   );

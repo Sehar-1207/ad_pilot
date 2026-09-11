@@ -1,54 +1,35 @@
-'use client';
+"use client";
 
-import { ArrowLeft, AlertTriangle } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { AlertCircle, ArrowLeft } from "lucide-react";
 
-interface CampaignNotFoundProps {
-  error?: string;
-}
-
-export function CampaignNotFound({
-  error,
-}: CampaignNotFoundProps) {
-  const router = useRouter();
-
+export default function CampaignNotFound({
+  onBack,
+}: {
+  onBack: () => void;
+}) {
   return (
-    <div className="min-h-screen p-6">
-      <button
-        type="button"
-        onClick={() => router.push('/dashboard/campaigns')}
-        style={{
-          color: 'var(--text-secondary)',
-          borderColor: 'var(--border-color)',
-        }}
-        className="flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors hover:text-[var(--text-primary)]"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to Campaigns
-      </button>
+    <div className="flex min-h-[500px] items-center justify-center px-4">
+      <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
+          <AlertCircle className="h-6 w-6 text-gray-500" />
+        </div>
 
-      <div
-        style={{
-          backgroundColor: 'var(--card-bg)',
-          borderColor: 'var(--border-color)',
-        }}
-        className="mt-6 rounded-xl border p-8 text-center"
-      >
-        <AlertTriangle className="mx-auto mb-3 h-7 w-7 text-rose-500" />
-
-        <h2
-          style={{ color: 'var(--text-primary)' }}
-          className="text-base font-bold"
-        >
+        <h2 className="text-lg font-semibold text-gray-900">
           Campaign Not Found
         </h2>
 
-        <p
-          style={{ color: 'var(--text-secondary)' }}
-          className="mt-1 text-xs"
-        >
-          {error || 'Unable to load this campaign.'}
+        <p className="mt-2 text-sm text-gray-500">
+          The selected campaign could not be found or is no longer available.
         </p>
+
+        <button
+          type="button"
+          onClick={onBack}
+          className="mt-6 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-700"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Campaigns
+        </button>
       </div>
     </div>
   );

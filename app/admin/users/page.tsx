@@ -15,7 +15,7 @@ interface AdminUsersResponse {
   data: {
     users: any[];
     statistics: {
-      totalUsers: number;
+      total: number;
       proUsers: number;
       freeUsers: number;
       pendingSync: number;
@@ -36,7 +36,7 @@ export default function AdminUsersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPlan, setSelectedPlan] = useState('All');
 
-  const [totalUsers, setTotalUsers] = useState(0);
+  const [total, setTotal] = useState(0);
   const [proUsers, setProUsers] = useState(0);
   const [freeUsers, setFreeUsers] = useState(0);
   const [pendingSync, setPendingSync] = useState(0);
@@ -76,8 +76,8 @@ export default function AdminUsersPage() {
                 user.plan === selectedPlan.toUpperCase()
             );
 
-      const mappedUsers: UserAccount[] = filteredUsers.map(
-        (user: any) => ({
+      const mappedUsers: UserAccount[] =
+        filteredUsers.map((user: any) => ({
           id: user._id || user.id,
 
           name: user.name || 'Unknown User',
@@ -94,14 +94,13 @@ export default function AdminUsersPage() {
             : 'Pending Sync',
 
           joinedDate: user.createdAt
-            ? new Date(user.createdAt).toLocaleDateString(
-                'en-US',
-                {
-                  month: 'short',
-                  day: '2-digit',
-                  year: 'numeric',
-                }
-              )
+            ? new Date(
+                user.createdAt
+              ).toLocaleDateString('en-US', {
+                month: 'short',
+                day: '2-digit',
+                year: 'numeric',
+              })
             : '-',
 
           adAccountsConnected:
@@ -110,8 +109,7 @@ export default function AdminUsersPage() {
           monthlySpend: '$0.00',
 
           geminiRequests: 0,
-        })
-      );
+        }));
 
       setUsers(mappedUsers);
 
@@ -119,8 +117,8 @@ export default function AdminUsersPage() {
         response.data?.pagination?.totalPages || 1
       );
 
-      setTotalUsers(
-        response.data?.statistics?.totalUsers || 0
+      setTotal(
+        response.data?.statistics?.total || 0
       );
 
       setProUsers(
@@ -135,7 +133,10 @@ export default function AdminUsersPage() {
         response.data?.statistics?.pendingSync || 0
       );
     } catch (err: any) {
-      console.error('Failed to load admin users:', err);
+      console.error(
+        'Failed to load admin users:',
+        err
+      );
 
       setError(
         err?.response?.data?.error ||
@@ -157,12 +158,15 @@ export default function AdminUsersPage() {
     setPage(1);
   }, [searchQuery, selectedPlan]);
 
-  const handleUpdatePlan = async (userId: string) => {
+  const handleUpdatePlan = async (
+    userId: string
+  ) => {
     try {
       setError('');
 
       const user = users.find(
-        (currentUser) => currentUser.id === userId
+        (currentUser) =>
+          currentUser.id === userId
       );
 
       if (!user) {
@@ -180,7 +184,10 @@ export default function AdminUsersPage() {
 
       await loadUsers();
     } catch (err: any) {
-      console.error('Failed to update user plan:', err);
+      console.error(
+        'Failed to update user plan:',
+        err
+      );
 
       setError(
         err?.response?.data?.error ||
@@ -195,9 +202,8 @@ export default function AdminUsersPage() {
       style={{
         color: 'var(--text-primary)',
       }}
-      className="space-y-8"
+      className="h-full space-y-8 overflow-hidden"
     >
-      {/* Header */}
       <div>
         <h1
           style={{
@@ -220,7 +226,6 @@ export default function AdminUsersPage() {
         </p>
       </div>
 
-      {/* Error */}
       {error && (
         <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3">
           <p className="text-sm text-red-500">
@@ -237,15 +242,13 @@ export default function AdminUsersPage() {
         </div>
       )}
 
-      {/* Metrics */}
       <UserMetrics
-        totalUsers={totalUsers}
+        totalUsers={total}
         proUsers={proUsers}
         freeUsers={freeUsers}
         pendingSync={pendingSync}
       />
 
-      {/* Filters */}
       <UserFilters
         searchQuery={searchQuery}
         onSearchChange={(value) => {
@@ -259,7 +262,6 @@ export default function AdminUsersPage() {
         }}
       />
 
-      {/* Users */}
       {loading ? (
         <div
           className="flex items-center justify-center py-20"
@@ -278,7 +280,6 @@ export default function AdminUsersPage() {
             onUpdatePlan={handleUpdatePlan}
           />
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between pt-4">
               <button
@@ -286,7 +287,10 @@ export default function AdminUsersPage() {
                 disabled={page <= 1}
                 onClick={() =>
                   setPage((current) =>
-                    Math.max(1, current - 1)
+                    Math.max(
+                      1,
+                      current - 1
+                    )
                   )
                 }
                 className="rounded-lg border px-4 py-2 text-sm disabled:opacity-40"

@@ -15,7 +15,7 @@ export default function StatCard({ label, value, change, isPositive, icon: Icon 
         backgroundColor: 'var(--bg-surface)',
         borderColor: 'var(--border-color)',
       }}
-      className="p-5 border rounded-xl space-y-3 transition-colors"
+      className="p-2 border rounded-xl space-y-3 transition-colors"
     >
       <div className="flex items-center justify-between">
         <span

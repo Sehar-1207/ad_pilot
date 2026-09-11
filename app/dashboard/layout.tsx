@@ -1,35 +1,47 @@
-import type { Metadata } from 'next';
+'use client';
+
+import { useEffect, useState } from 'react';
 import Sidebar from '@/components/dashboard/Sidebar';
 import DashboardNavbar from '@/components/dashboard/DashboardNavbar';
-
-export const metadata: Metadata = {
-  title: "Dashboard | Ad Pilot",
-  description: "Manage your advertising campaigns, track analytics, and generate AI insights.",
-   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.png",
-    apple: "/favicon.png",
-  },
-};
+import apiClient from '@/api/client';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const userPlan: 'free' | 'pro' = 'free'; 
-  const isMetaConnected = false;
-  const userName = "Sehar Ajmal";
+  const [userPlan, setUserPlan] = useState<'free' | 'pro'>('free');
+  const [isMetaConnected, setIsMetaConnected] = useState(false);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const response = await apiClient.get('/auth/me');
+
+        const user = response.data.user;
+
+        setUserPlan(
+          String(user?.plan || 'FREE').toLowerCase() === 'pro'
+            ? 'pro'
+            : 'free'
+        );
+
+        setIsMetaConnected(Boolean(user?.isMetaConnected));
+      } catch (error) {
+        console.error('Failed to load dashboard user:', error);
+      }
+    };
+
+    loadUser();
+  }, []);
 
   return (
     <div className="min-h-screen bg-[var(--bg-surface)] flex">
       <Sidebar userPlan={userPlan} />
 
       <div className="flex-1 flex flex-col min-w-0 md:ml-64">
-        <DashboardNavbar 
-          isMetaConnected={isMetaConnected} 
-          // userName={userName} 
-          // userRole="User"
+        <DashboardNavbar
+          isMetaConnected={isMetaConnected}
         />
 
         <main className="flex-1 p-6 md:p-8 overflow-y-auto">

@@ -24,145 +24,121 @@ export default function SubscriptionsTable({
   return (
     <div
       style={{
-        backgroundColor: 'var(--bg-surface)',
         borderColor: 'var(--border-color)',
+        backgroundColor: 'var(--bg-surface)',
       }}
-      className="border rounded-xl overflow-hidden shadow-sm transition-colors"
+      className="w-full border rounded-xl shadow-sm overflow-hidden"
     >
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+      <div
+        className="h-[260px] overflow-y-scroll overflow-x-auto"
+        style={{
+          scrollbarWidth: 'thin',
+        }}
+      >
+        <table className="w-full min-w-[700px] text-left border-collapse">
           <thead>
             <tr
               style={{
-                backgroundColor: 'var(--bg-accent)',
+                backgroundColor: 'var(--bg-surface)',
                 borderColor: 'var(--border-color)',
               }}
               className="border-b"
             >
               <th
                 style={{ color: 'var(--text-primary)' }}
-                className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider opacity-60 whitespace-nowrap"
+                className="sticky top-0 z-20 bg-[var(--bg-surface)] px-4 sm:px-5 py-3 text-[10px] sm:text-xs font-bold uppercase tracking-wider  whitespace-nowrap"
               >
                 Customer
               </th>
 
               <th
                 style={{ color: 'var(--text-primary)' }}
-                className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider opacity-60 whitespace-nowrap"
+                className="sticky top-0 z-20 bg-[var(--bg-surface)] px-4 sm:px-5 py-3 text-[10px] sm:text-xs font-bold uppercase tracking-wider whitespace-nowrap"
               >
                 Plan
               </th>
 
               <th
                 style={{ color: 'var(--text-primary)' }}
-                className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider opacity-60 whitespace-nowrap"
+                className="sticky top-0 z-20 bg-[var(--bg-surface)] px-4 sm:px-5 py-3 text-[10px] sm:text-xs font-bold uppercase tracking-wider  whitespace-nowrap"
               >
                 Amount
               </th>
 
               <th
                 style={{ color: 'var(--text-primary)' }}
-                className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider opacity-60 whitespace-nowrap"
+                className="sticky top-0 z-20 bg-[var(--bg-surface)] px-4 sm:px-5 py-3 text-[10px] sm:text-xs font-bold uppercase tracking-wider whitespace-nowrap"
               >
                 Billing Cycle
               </th>
 
               <th
                 style={{ color: 'var(--text-primary)' }}
-                className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider opacity-60 whitespace-nowrap"
+                className="sticky top-0 z-20 bg-[var(--bg-surface)] px-4 sm:px-5 py-3 text-[10px] sm:text-xs font-bold uppercase tracking-wider whitespace-nowrap"
               >
                 Status
               </th>
 
               <th
                 style={{ color: 'var(--text-primary)' }}
-                className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider opacity-60 whitespace-nowrap"
+                className="sticky top-0 z-20 bg-[var(--bg-surface)] px-4 sm:px-5 py-3 text-[10px] sm:text-xs font-bold uppercase tracking-wider  whitespace-nowrap"
               >
                 Next Billing
               </th>
 
               <th
                 style={{ color: 'var(--text-primary)' }}
-                className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider opacity-60 text-right"
+                className="sticky top-0 z-20 bg-[var(--bg-surface)] px-4 sm:px-5 py-3 text-[10px] sm:text-xs font-bold uppercase tracking-wider  text-right whitespace-nowrap"
               >
                 Actions
               </th>
             </tr>
           </thead>
 
-          <tbody>
+          <tbody className="divide-y divide-[var(--border-color)]">
             {subscriptions.map((sub) => (
               <tr
                 key={sub.id}
                 style={{
                   borderColor: 'var(--border-color)',
+                  color: 'var(--text-primary)',
                 }}
-                className="border-b last:border-b-0 hover:bg-[var(--bg-accent)] transition-colors"
+                className="border-b hover:bg-[var(--bg-accent)] transition-colors"
               >
-                {/* CUSTOMER */}
-                <td className="px-5 py-4">
-                  <div className="min-w-[180px]">
-                    <div
-                      style={{
-                        color: 'var(--text-primary)',
-                      }}
-                      className="text-sm font-semibold"
-                    >
+                <td className="px-4 sm:px-5 py-3.5 sm:py-4">
+                  <div className="min-w-[140px] sm:min-w-[180px]">
+                    <div className="text-xs sm:text-sm font-semibold truncate">
                       {sub.customerName}
                     </div>
 
-                    <div
-                      style={{
-                        color: 'var(--text-primary)',
-                      }}
-                      className="text-xs opacity-50 mt-0.5"
-                    >
+                    <div className="text-[11px] sm:text-xs opacity-50 mt-0.5 truncate">
                       {sub.email}
                     </div>
                   </div>
                 </td>
 
-                {/* PLAN */}
-                <td className="px-5 py-4">
-                  <span
-                    style={{
-                      color: 'var(--text-primary)',
-                    }}
-                    className="text-xs font-semibold"
-                  >
+                <td className="px-4 sm:px-5 py-3.5 sm:py-4">
+                  <span className="text-xs font-semibold whitespace-nowrap">
                     {sub.planName}
                   </span>
                 </td>
 
-                {/* AMOUNT */}
-                <td className="px-5 py-4">
-                  <span
-                    style={{
-                      color: 'var(--text-primary)',
-                    }}
-                    className="text-xs font-semibold whitespace-nowrap"
-                  >
+                <td className="px-4 sm:px-5 py-3.5 sm:py-4">
+                  <span className="text-xs font-semibold whitespace-nowrap">
                     {sub.amount}
                   </span>
                 </td>
 
-                {/* BILLING CYCLE */}
-                <td className="px-5 py-4">
-                  <span
-                    style={{
-                      color: 'var(--text-primary)',
-                    }}
-                    className="text-xs font-medium"
-                  >
+                <td className="px-4 sm:px-5 py-3.5 sm:py-4">
+                  <span className="text-xs font-medium whitespace-nowrap">
                     {sub.billingCycle}
                   </span>
                 </td>
 
-                {/* STATUS */}
-                <td className="px-5 py-4">
-                  <div className="flex items-center gap-2">
+                <td className="px-4 sm:px-5 py-3.5 sm:py-4">
+                  <div className="flex items-center gap-2 whitespace-nowrap">
                     <span
-                      className={`w-2 h-2 rounded-full ${
+                      className={`w-2 h-2 rounded-full shrink-0 ${
                         sub.status === 'Active'
                           ? 'bg-emerald-500'
                           : sub.status === 'Past Due'
@@ -185,20 +161,13 @@ export default function SubscriptionsTable({
                   </div>
                 </td>
 
-                {/* NEXT BILLING */}
-                <td className="px-5 py-4">
-                  <span
-                    style={{
-                      color: 'var(--text-primary)',
-                    }}
-                    className="text-xs font-medium whitespace-nowrap"
-                  >
+                <td className="px-4 sm:px-5 py-3.5 sm:py-4">
+                  <span className="text-xs font-medium whitespace-nowrap">
                     {sub.nextBillingDate}
                   </span>
                 </td>
 
-                {/* ACTIONS */}
-                <td className="px-5 py-4 text-right">
+                <td className="px-4 sm:px-5 py-3.5 sm:py-4 text-right whitespace-nowrap">
                   <SubscriptionActionsDropdown
                     stripeCustomerId={sub.stripeCustomerId}
                   />
@@ -209,7 +178,6 @@ export default function SubscriptionsTable({
         </table>
       </div>
 
-      {/* EMPTY STATE */}
       {subscriptions.length === 0 && (
         <div className="py-12 text-center">
           <p

@@ -23,7 +23,9 @@ export default function AuthPage() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ): void => {
     setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
@@ -44,21 +46,50 @@ export default function AuthPage() {
 
     try {
       if (mode === "login") {
-        await loginUser(
+        const response = await loginUser(
           formData.email.trim(),
           formData.password
         );
+
+        console.log("Login response:", response);
+        console.log("Logged-in user:", response?.user);
+        console.log("User role:", response?.user?.role);
+
+        if (!response?.success || !response?.user) {
+          throw new Error(
+            response?.error || "Login failed. Please try again."
+          );
+        }
+
+        if (response.user.role === "ADMIN") {
+          window.location.href = "/admin";
+        } else {
+          window.location.href = "/dashboard";
+        }
       } else {
-        await registerUser(
+        const response = await registerUser(
           formData.name.trim(),
           formData.email.trim(),
           formData.password
         );
-      }
 
-      // Backend stores JWT in HTTP-only cookie.
-      // We do NOT store the token in localStorage.
-      window.location.href = "/dashboard";
+        console.log("Registration response:", response);
+        console.log("Registered user:", response?.user);
+        console.log("Registered user role:", response?.user?.role);
+
+        if (!response?.success || !response?.user) {
+          throw new Error(
+            response?.error ||
+              "Registration failed. Please try again."
+          );
+        }
+
+        if (response.user.role === "ADMIN") {
+          window.location.href = "/admin";
+        } else {
+          window.location.href = "/dashboard";
+        }
+      }
     } catch (err: any) {
       console.error("Auth error:", err);
 
@@ -88,7 +119,6 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-4 bg-[var(--bg-primary)] transition-colors duration-300">
       <div className="relative w-full max-w-md p-6 sm:p-9 rounded-[28px] bg-[var(--bg-surface)] border border-[var(--border-color)] shadow-2xl flex flex-col items-center text-center backdrop-blur-sm">
-
         <Link
           href="/"
           className="absolute top-5 right-5 p-2 rounded-full text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-accent)] transition-all duration-200"
@@ -111,7 +141,9 @@ export default function AuthPage() {
         </div>
 
         <h1 className="text-xl font-extrabold text-[var(--text-primary)] tracking-tight mb-5">
-          {mode === "login" ? "Sign in with email" : "Create an account"}
+          {mode === "login"
+            ? "Sign in with email"
+            : "Create an account"}
         </h1>
 
         <form onSubmit={handleSubmit} className="w-full space-y-3.5">
@@ -145,6 +177,7 @@ export default function AuthPage() {
 
           <div className="relative flex items-center">
             <Lock className="absolute left-3.5 w-4 h-4 text-[var(--text-secondary)] pointer-events-none" />
+
             <input
               type={showPassword ? "text" : "password"}
               name="password"
@@ -214,7 +247,6 @@ export default function AuthPage() {
             </p>
           )}
         </div>
-
       </div>
     </div>
   );

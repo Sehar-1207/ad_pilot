@@ -57,12 +57,6 @@ interface SettingsData {
     importRange?: number;
     lastSyncAt?: string | null;
   };
-  notifications?: {
-    emailAlerts?: boolean;
-    campaignAlerts?: boolean;
-    weeklyReports?: boolean;
-    syncFailureAlerts?: boolean;
-  };
 }
 
 interface ProfileData {
@@ -83,6 +77,18 @@ interface SubscriptionData {
   planEndsAt?: string | null;
   currentPeriodEnd?: string | null;
   cancelAtPeriodEnd?: boolean;
+}
+
+interface Notification {
+  id?: string;
+  _id?: string;
+  title?: string;
+  message?: string;
+  description?: string;
+  type?: string;
+  createdAt?: string;
+  read?: boolean;
+  isRead?: boolean;
 }
 
 const extractData = (response: any) => {
@@ -160,8 +166,14 @@ export default function SettingsPage() {
   const [subscription, setSubscription] =
     useState<SubscriptionData | null>(null);
 
+  const [notifications, setNotifications] =
+    useState<Notification[]>([]);
+
   const [loading, setLoading] =
     useState(true);
+
+  const [notificationsLoading, setNotificationsLoading] =
+    useState(false);
 
   const [saving, setSaving] =
     useState(false);
@@ -199,18 +211,6 @@ export default function SettingsPage() {
   const [importRange, setImportRange] =
     useState<number>(30);
 
-  const [emailAlerts, setEmailAlerts] =
-    useState(false);
-
-  const [campaignAlerts, setCampaignAlerts] =
-    useState(false);
-
-  const [weeklyReports, setWeeklyReports] =
-    useState(false);
-
-  const [syncFailureAlerts, setSyncFailureAlerts] =
-    useState(false);
-
   const [enabledAccounts, setEnabledAccounts] =
     useState<Record<string, boolean>>({});
 
@@ -242,17 +242,22 @@ export default function SettingsPage() {
 
   const loadMetaData = async () => {
     try {
-      const statusResponse = await getMetaStatus();
+      const statusResponse =
+        await getMetaStatus();
 
       const connectedFromMeta =
         getMetaConnected(statusResponse);
 
-      setMetaConnected(connectedFromMeta);
+      setMetaConnected(
+        connectedFromMeta
+      );
 
       const accountId =
         getMetaAccountId(statusResponse);
 
-      setSelectedMetaAccountId(accountId);
+      setSelectedMetaAccountId(
+        accountId
+      );
 
       if (connectedFromMeta) {
         try {
@@ -260,7 +265,9 @@ export default function SettingsPage() {
             await getMetaAdAccounts();
 
           const accounts =
-            normalizeAccounts(accountsResponse);
+            normalizeAccounts(
+              accountsResponse
+            );
 
           setMetaAccounts(accounts);
 
@@ -269,17 +276,21 @@ export default function SettingsPage() {
             boolean
           > = {};
 
-          accounts.forEach((account) => {
-            accountState[account.id] =
-              account.isEnabled ??
-              account.enabled ??
-              account.id === accountId;
-          });
+          accounts.forEach(
+            (account) => {
+              accountState[account.id] =
+                account.isEnabled ??
+                account.enabled ??
+                account.id === accountId;
+            }
+          );
 
-          setEnabledAccounts((current) => ({
-            ...accountState,
-            ...current,
-          }));
+          setEnabledAccounts(
+            (current) => ({
+              ...accountState,
+              ...current,
+            })
+          );
         } catch (accountsError) {
           console.error(
             'Meta ad accounts loading error:',
@@ -288,7 +299,9 @@ export default function SettingsPage() {
         }
       } else {
         setMetaAccounts([]);
-        setSelectedMetaAccountId(null);
+        setSelectedMetaAccountId(
+          null
+        );
       }
     } catch (err) {
       console.error(
@@ -297,6 +310,49 @@ export default function SettingsPage() {
       );
 
       setMetaConnected(false);
+    }
+  };
+
+  const loadNotifications = async () => {
+    try {
+      setNotificationsLoading(true);
+
+      const response =
+        await apiClient.get(
+          '/getNotifications '
+        );
+
+      const data =
+        response?.data?.data ??
+        response?.data ??
+        [];
+
+      const notificationList =
+        Array.isArray(data)
+          ? data
+          : Array.isArray(data?.notifications)
+            ? data.notifications
+            : [];
+
+      setNotifications(
+        notificationList
+      );
+    } catch (err) {
+      console.error(
+        'Notifications loading error:',
+        err
+      );
+
+      showError(
+        getErrorMessage(
+          err,
+          'Unable to load notifications.'
+        )
+      );
+    } finally {
+      setNotificationsLoading(
+        false
+      );
     }
   };
 
@@ -310,65 +366,63 @@ export default function SettingsPage() {
         profileResponse,
         subscriptionResponse,
       ] = await Promise.allSettled([
-        apiClient.get('/dashboard/settings'),
-        apiClient.get('/dashboard/profile'),
-        apiClient.get('/subscriptions/me'),
+        apiClient.get(
+          '/dashboard/settings'
+        ),
+        apiClient.get(
+          '/dashboard/profile'
+        ),
+        apiClient.get(
+          '/subscriptions/me'
+        ),
       ]);
 
-      if (settingsResponse.status === 'fulfilled') {
+      if (
+        settingsResponse.status ===
+        'fulfilled'
+      ) {
         const data =
-          settingsResponse.value?.data?.data ??
-          settingsResponse.value?.data;
+          settingsResponse.value
+            ?.data?.data ??
+          settingsResponse.value
+            ?.data;
 
-        setSettings(data ?? null);
+        setSettings(
+          data ?? null
+        );
 
-        const sync = data?.sync;
-        const notifications =
-          data?.notifications;
-        const accounts =
-          data?.meta?.adAccounts ?? [];
+        const sync =
+          data?.sync;
 
         if (sync?.frequency) {
-          setFrequency(sync.frequency);
+          setFrequency(
+            sync.frequency
+          );
         }
 
         const parsedImportRange =
-          Number(sync?.importRange);
+          Number(
+            sync?.importRange
+          );
 
         if (
-          Number.isFinite(parsedImportRange) &&
+          Number.isFinite(
+            parsedImportRange
+          ) &&
           [30, 90, 365].includes(
             parsedImportRange
           )
         ) {
-          setImportRange(parsedImportRange);
+          setImportRange(
+            parsedImportRange
+          );
         } else {
           setImportRange(30);
         }
 
-        setEmailAlerts(
-          Boolean(
-            notifications?.emailAlerts
-          )
-        );
-
-        setCampaignAlerts(
-          Boolean(
-            notifications?.campaignAlerts
-          )
-        );
-
-        setWeeklyReports(
-          Boolean(
-            notifications?.weeklyReports
-          )
-        );
-
-        setSyncFailureAlerts(
-          Boolean(
-            notifications?.syncFailureAlerts
-          )
-        );
+        const accounts =
+          data?.meta
+            ?.adAccounts ?? [];
 
         const accountState: Record<
           string,
@@ -377,7 +431,9 @@ export default function SettingsPage() {
 
         accounts.forEach(
           (account: AdAccount) => {
-            accountState[account.id] =
+            accountState[
+              account.id
+            ] =
               account.isEnabled ??
               account.enabled ??
               false;
@@ -392,7 +448,8 @@ export default function SettingsPage() {
         );
 
         if (
-          data?.meta?.adAccountId
+          data?.meta
+            ?.adAccountId
         ) {
           setSelectedMetaAccountId(
             data.meta.adAccountId
@@ -402,12 +459,19 @@ export default function SettingsPage() {
         throw settingsResponse.reason;
       }
 
-      if (profileResponse.status === 'fulfilled') {
+      if (
+        profileResponse.status ===
+        'fulfilled'
+      ) {
         const data =
-          profileResponse.value?.data?.data ??
-          profileResponse.value?.data;
+          profileResponse.value
+            ?.data?.data ??
+          profileResponse.value
+            ?.data;
 
-        setProfile(data ?? null);
+        setProfile(
+          data ?? null
+        );
       }
 
       if (
@@ -415,10 +479,14 @@ export default function SettingsPage() {
         'fulfilled'
       ) {
         const data =
-          subscriptionResponse.value?.data?.data ??
-          subscriptionResponse.value?.data;
+          subscriptionResponse.value
+            ?.data?.data ??
+          subscriptionResponse.value
+            ?.data;
 
-        setSubscription(data ?? null);
+        setSubscription(
+          data ?? null
+        );
       }
 
       await loadMetaData();
@@ -447,6 +515,7 @@ export default function SettingsPage() {
     try {
       setConnecting(true);
       setError(null);
+
       connectMeta();
     } catch (err) {
       console.error(
@@ -474,7 +543,9 @@ export default function SettingsPage() {
 
       setMetaConnected(false);
       setMetaAccounts([]);
-      setSelectedMetaAccountId(null);
+      setSelectedMetaAccountId(
+        null
+      );
 
       showSuccess(
         'Meta account disconnected successfully.'
@@ -502,7 +573,9 @@ export default function SettingsPage() {
     accountId: string
   ) => {
     try {
-      setSelectingAccount(accountId);
+      setSelectingAccount(
+        accountId
+      );
       setError(null);
 
       await connectMetaAdAccount(
@@ -527,15 +600,19 @@ export default function SettingsPage() {
         );
 
       if (account) {
-        setSettings((current) => ({
-          ...(current ?? {}),
-          meta: {
-            ...(current?.meta ?? {}),
-            adAccountId: account.id,
-            adAccountName: account.name,
-            connected: true,
-          },
-        }));
+        setSettings(
+          (current) => ({
+            ...(current ?? {}),
+            meta: {
+              ...(current?.meta ?? {}),
+              adAccountId:
+                account.id,
+              adAccountName:
+                account.name,
+              connected: true,
+            },
+          })
+        );
       }
 
       showSuccess(
@@ -556,7 +633,9 @@ export default function SettingsPage() {
         )
       );
     } finally {
-      setSelectingAccount(null);
+      setSelectingAccount(
+        null
+      );
     }
   };
 
@@ -564,12 +643,15 @@ export default function SettingsPage() {
     accountId: string
   ) => {
     const nextValue =
-      !enabledAccounts[accountId];
+      !enabledAccounts[
+        accountId
+      ];
 
     setEnabledAccounts(
       (current) => ({
         ...current,
-        [accountId]: nextValue,
+        [accountId]:
+          nextValue,
       })
     );
 
@@ -577,7 +659,8 @@ export default function SettingsPage() {
       await apiClient.patch(
         `/dashboard/settings/ad-accounts/${accountId}`,
         {
-          enabled: nextValue,
+          enabled:
+            nextValue,
         }
       );
 
@@ -597,7 +680,8 @@ export default function SettingsPage() {
       setEnabledAccounts(
         (current) => ({
           ...current,
-          [accountId]: !nextValue,
+          [accountId]:
+            !nextValue,
         })
       );
 
@@ -611,7 +695,7 @@ export default function SettingsPage() {
   };
 
   const handleSync = async () => {
-    if (!metaConnected && !connected) {
+    if (!connected) {
       showError(
         'Connect your Meta account before synchronizing data.'
       );
@@ -653,87 +737,53 @@ export default function SettingsPage() {
     }
   };
 
-  const saveSyncSettings = async () => {
-    try {
-      setSaving(true);
-      setError(null);
+  const saveSyncSettings =
+    async () => {
+      try {
+        setSaving(true);
+        setError(null);
 
-      const safeImportRange =
-        [30, 90, 365].includes(importRange)
-          ? importRange
-          : 30;
+        const safeImportRange =
+          [30, 90, 365].includes(
+            importRange
+          )
+            ? importRange
+            : 30;
 
-      setImportRange(
-        safeImportRange
-      );
+        setImportRange(
+          safeImportRange
+        );
 
-      await apiClient.put(
-        '/dashboard/settings/sync',
-        {
-          frequency,
-          importRange:
-            safeImportRange,
-        }
-      );
+        await apiClient.put(
+          '/dashboard/settings/sync',
+          {
+            frequency,
+            importRange:
+              safeImportRange,
+          }
+        );
 
-      await loadSettings();
+        await loadSettings();
 
-      showSuccess(
-        'Sync preferences saved successfully.'
-      );
-    } catch (err) {
-      console.error(
-        'Sync settings update error:',
-        err
-      );
+        showSuccess(
+          'Sync preferences saved successfully.'
+        );
+      } catch (err) {
+        console.error(
+          'Sync settings update error:',
+          err
+        );
 
-      showError(
-        getErrorMessage(
-          err,
-          'Unable to save sync preferences.'
-        )
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const saveNotifications = async () => {
-    try {
-      setSaving(true);
-      setError(null);
-
-      await apiClient.put(
-        '/dashboard/notifications',
-        {
-          emailAlerts,
-          campaignAlerts,
-          weeklyReports,
-          syncFailureAlerts,
-        }
-      );
-
-      await loadSettings();
-
-      showSuccess(
-        'Notification preferences saved successfully.'
-      );
-    } catch (err) {
-      console.error(
-        'Notification update error:',
-        err
-      );
-
-      showError(
-        getErrorMessage(
-          err,
-          'Unable to save notification preferences.'
-        )
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
+        showError(
+          getErrorMessage(
+            err,
+            'Unable to save sync preferences.'
+          )
+        );
+      } finally {
+        setSaving(false);
+      }
+    };
 
   const formatDate = (
     value?: string | null
@@ -742,7 +792,8 @@ export default function SettingsPage() {
       return 'Not available';
     }
 
-    const date = new Date(value);
+    const date =
+      new Date(value);
 
     if (
       Number.isNaN(
@@ -762,54 +813,62 @@ export default function SettingsPage() {
     );
   };
 
-  const getTokenStatus = () => {
-    const expiresAt =
-      settings?.meta?.tokenExpiresAt;
+  const getTokenStatus =
+    () => {
+      const expiresAt =
+        settings?.meta
+          ?.tokenExpiresAt;
 
-    if (!expiresAt) {
+      if (!expiresAt) {
+        return {
+          text: 'Expiration date unavailable',
+          valid: true,
+        };
+      }
+
+      const expiry =
+        new Date(expiresAt);
+
+      if (
+        Number.isNaN(
+          expiry.getTime()
+        )
+      ) {
+        return {
+          text: 'Expiration date unavailable',
+          valid: true,
+        };
+      }
+
+      const difference =
+        expiry.getTime() -
+        Date.now();
+
+      if (difference <= 0) {
+        return {
+          text: 'Expired',
+          valid: false,
+        };
+      }
+
+      const days =
+        Math.ceil(
+          difference /
+          (1000 *
+            60 *
+            60 *
+            24)
+        );
+
       return {
-        text: 'Expiration date unavailable',
+        text: `Active · Expires in ${days} day${
+          days === 1
+            ? ''
+            : 's'
+        }`,
         valid: true,
       };
-    }
-
-    const expiry =
-      new Date(expiresAt);
-
-    if (
-      Number.isNaN(
-        expiry.getTime()
-      )
-    ) {
-      return {
-        text: 'Expiration date unavailable',
-        valid: true,
-      };
-    }
-
-    const difference =
-      expiry.getTime() -
-      Date.now();
-
-    if (difference <= 0) {
-      return {
-        text: 'Expired',
-        valid: false,
-      };
-    }
-
-    const days = Math.ceil(
-      difference /
-        (1000 * 60 * 60 * 24)
-    );
-
-    return {
-      text: `Active · Expires in ${days} day${
-        days === 1 ? '' : 's'
-      }`,
-      valid: true,
     };
-  };
 
   const tokenStatus =
     getTokenStatus();
@@ -817,12 +876,15 @@ export default function SettingsPage() {
   const accounts =
     metaAccounts.length > 0
       ? metaAccounts
-      : settings?.meta?.adAccounts ?? [];
+      : settings?.meta
+          ?.adAccounts ?? [];
 
   const connected =
     metaConnected ||
-    profile?.isMetaConnected === true ||
-    settings?.meta?.connected === true;
+    profile?.isMetaConnected ===
+      true ||
+    settings?.meta
+      ?.connected === true;
 
   const selectedAccount =
     accounts.find(
@@ -833,7 +895,8 @@ export default function SettingsPage() {
     accounts.find(
       (account) =>
         account.id ===
-        settings?.meta?.adAccountId
+        settings?.meta
+          ?.adAccountId
     );
 
   const plan =
@@ -845,6 +908,15 @@ export default function SettingsPage() {
     subscription?.planEndsAt ??
     subscription?.currentPeriodEnd ??
     null;
+
+  const handleNotificationsTab =
+    async () => {
+      setActiveTab(
+        'notifications'
+      );
+
+      await loadNotifications();
+    };
 
   if (loading) {
     return (
@@ -889,10 +961,13 @@ export default function SettingsPage() {
 
           <button
             onClick={() =>
-              setActiveTab('integrations')
+              setActiveTab(
+                'integrations'
+              )
             }
             className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
-              activeTab === 'integrations'
+              activeTab ===
+              'integrations'
                 ? 'border-[var(--primary)] text-[var(--primary)]'
                 : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
@@ -903,10 +978,13 @@ export default function SettingsPage() {
 
           <button
             onClick={() =>
-              setActiveTab('preferences')
+              setActiveTab(
+                'preferences'
+              )
             }
             className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
-              activeTab === 'preferences'
+              activeTab ===
+              'preferences'
                 ? 'border-[var(--primary)] text-[var(--primary)]'
                 : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
@@ -916,11 +994,12 @@ export default function SettingsPage() {
           </button>
 
           <button
-            onClick={() =>
-              setActiveTab('notifications')
+            onClick={
+              handleNotificationsTab
             }
             className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
-              activeTab === 'notifications'
+              activeTab ===
+              'notifications'
                 ? 'border-[var(--primary)] text-[var(--primary)]'
                 : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
@@ -931,7 +1010,9 @@ export default function SettingsPage() {
 
           <button
             onClick={() =>
-              setActiveTab('billing')
+              setActiveTab(
+                'billing'
+              )
             }
             className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
               activeTab === 'billing'
@@ -986,7 +1067,8 @@ export default function SettingsPage() {
                       <p className="text-sm text-[var(--text-secondary)]">
                         {connected
                           ? selectedAccount?.name ??
-                            settings?.meta?.adAccountName ??
+                            settings?.meta
+                              ?.adAccountName ??
                             'Meta account connected'
                           : 'Connect your Meta Business account to synchronize advertising data.'}
                       </p>
@@ -1001,7 +1083,9 @@ export default function SettingsPage() {
                       <>
                         <button
                           type="button"
-                          onClick={handleSync}
+                          onClick={
+                            handleSync
+                          }
                           disabled={
                             syncing ||
                             !selectedMetaAccountId
@@ -1044,7 +1128,9 @@ export default function SettingsPage() {
                         onClick={
                           handleConnectMeta
                         }
-                        disabled={connecting}
+                        disabled={
+                          connecting
+                        }
                         className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors disabled:opacity-50"
                       >
                         <Link2 className="w-4 h-4" />
@@ -1109,262 +1195,127 @@ export default function SettingsPage() {
                 ) : (
                   <div className="divide-y divide-[var(--border-color)] border border-[var(--border-color)] rounded-lg overflow-hidden">
 
-                    {accounts.map((account) => {
-                      const enabled =
-                        enabledAccounts[
-                          account.id
-                        ] ?? false;
+                    {accounts.map(
+                      (account) => {
+                        const enabled =
+                          enabledAccounts[
+                            account.id
+                          ] ?? false;
 
-                      const selected =
-                        selectedMetaAccountId ===
-                        account.id;
+                        const selected =
+                          selectedMetaAccountId ===
+                          account.id;
 
-                      const accountId =
-                        account.account_id ??
-                        account.id;
+                        const accountId =
+                          account.account_id ??
+                          account.id;
 
-                      return (
-                        <div
-                          key={account.id}
-                          className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-[var(--bg-accent)] transition-colors"
-                        >
+                        return (
+                          <div
+                            key={
+                              account.id
+                            }
+                            className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-[var(--bg-accent)] transition-colors"
+                          >
 
-                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3">
 
-                            <input
-                              type="checkbox"
-                              checked={enabled}
-                              onChange={() =>
-                                toggleAdAccount(
-                                  account.id
-                                )
-                              }
-                              disabled={!connected}
-                              className="w-4 h-4 rounded border-[var(--border-color)] text-[var(--primary)] focus:ring-[var(--primary)]"
-                            />
-
-                            <div>
-                              <p className="text-sm font-medium">
-                                {account.name}
-                              </p>
-
-                              <p className="text-xs text-[var(--text-secondary)]">
-                                ID: {accountId}
-
-                                {account.currency &&
-                                  ` • ${account.currency}`}
-
-                                {account.timezone_name &&
-                                  ` • ${account.timezone_name}`}
-
-                                {(account.pixelId ??
-                                  account.pixel) &&
-                                  ` • Pixel: ${
-                                    account.pixelId ??
-                                    account.pixel
-                                  }`}
-                              </p>
-                            </div>
-
-                          </div>
-
-                          <div className="flex items-center gap-2">
-
-                            {selected && (
-                              <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-[var(--accent-teal)]/10 text-[var(--accent-teal)]">
-                                Connected
-                              </span>
-                            )}
-
-                            <span
-                              className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-                                enabled
-                                  ? 'bg-[var(--accent-teal)]/10 text-[var(--accent-teal)]'
-                                  : 'bg-[var(--bg-accent)] text-[var(--text-secondary)]'
-                              }`}
-                            >
-                              {enabled
-                                ? 'Syncing'
-                                : 'Disabled'}
-                            </span>
-
-                            {!selected && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleConnectAdAccount(
+                              <input
+                                type="checkbox"
+                                checked={
+                                  enabled
+                                }
+                                onChange={() =>
+                                  toggleAdAccount(
                                     account.id
                                   )
                                 }
                                 disabled={
-                                  selectingAccount !==
-                                  null
+                                  !connected
                                 }
-                                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors disabled:opacity-50"
+                                className="w-4 h-4 rounded border-[var(--border-color)] text-[var(--primary)] focus:ring-[var(--primary)]"
+                              />
+
+                              <div>
+                                <p className="text-sm font-medium">
+                                  {
+                                    account.name
+                                  }
+                                </p>
+
+                                <p className="text-xs text-[var(--text-secondary)]">
+                                  ID:{' '}
+                                  {
+                                    accountId
+                                  }
+
+                                  {account.currency &&
+                                    ` • ${account.currency}`}
+
+                                  {account.timezone_name &&
+                                    ` • ${account.timezone_name}`}
+
+                                  {(account.pixelId ??
+                                    account.pixel) &&
+                                    ` • Pixel: ${
+                                      account.pixelId ??
+                                      account.pixel
+                                    }`}
+                                </p>
+                              </div>
+
+                            </div>
+
+                            <div className="flex items-center gap-2">
+
+                              {selected && (
+                                <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-[var(--accent-teal)]/10 text-[var(--accent-teal)]">
+                                  Connected
+                                </span>
+                              )}
+
+                              <span
+                                className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+                                  enabled
+                                    ? 'bg-[var(--accent-teal)]/10 text-[var(--accent-teal)]'
+                                    : 'bg-[var(--bg-accent)] text-[var(--text-secondary)]'
+                                }`}
                               >
-                                {selectingAccount ===
-                                account.id
-                                  ? 'Connecting...'
-                                  : 'Connect'}
-                              </button>
-                            )}
+                                {enabled
+                                  ? 'Syncing'
+                                  : 'Disabled'}
+                              </span>
+
+                              {!selected && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleConnectAdAccount(
+                                      account.id
+                                    )
+                                  }
+                                  disabled={
+                                    selectingAccount !==
+                                    null
+                                  }
+                                  className="px-3 py-1.5 text-xs font-medium rounded-lg bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors disabled:opacity-50"
+                                >
+                                  {selectingAccount ===
+                                    account.id
+                                    ? 'Connecting...'
+                                    : 'Connect'}
+                                </button>
+                              )}
+
+                            </div>
 
                           </div>
-
-                        </div>
-                      );
-                    })}
+                        );
+                      }
+                    )}
 
                   </div>
                 )}
-
-              </div>
-
-              <div className="border border-[var(--border-color)] rounded-xl p-6 space-y-4">
-
-                <div>
-                  <h3 className="font-semibold text-lg">
-                    Data Sync Preferences
-                  </h3>
-
-                  <p className="text-sm text-[var(--text-secondary)]">
-                    Configure how performance data updates from Meta.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                  <div className="space-y-2">
-
-                    <label className="text-sm font-medium">
-                      Sync Frequency
-                    </label>
-
-                    <select
-                      value={frequency}
-                      onChange={(event) =>
-                        setFrequency(
-                          event.target.value
-                        )
-                      }
-                      className="w-full px-3 py-2 bg-[var(--bg-accent)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                    >
-                      <option value="hourly">
-                        Hourly
-                      </option>
-
-                      <option value="webhooks">
-                        Real-time via Meta Webhooks
-                      </option>
-
-                      <option value="daily">
-                        Once Daily
-                      </option>
-                    </select>
-
-                  </div>
-
-                  <div className="space-y-2">
-
-                    <label className="text-sm font-medium">
-                      Import Range
-                    </label>
-
-                    <select
-                      value={
-                        [30, 90, 365].includes(
-                          importRange
-                        )
-                          ? importRange
-                          : 30
-                      }
-                      onChange={(event) => {
-                        const value =
-                          Number(
-                            event.target.value
-                          );
-
-                        if (
-                          [30, 90, 365].includes(
-                            value
-                          )
-                        ) {
-                          setImportRange(value);
-                        } else {
-                          setImportRange(30);
-                        }
-                      }}
-                      className="w-full px-3 py-2 bg-[var(--bg-accent)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                    >
-                      <option value={30}>
-                        Last 30 Days
-                      </option>
-
-                      <option value={90}>
-                        Last 90 Days
-                      </option>
-
-                      <option value={365}>
-                        Last 1 Year
-                      </option>
-                    </select>
-
-                  </div>
-
-                </div>
-
-                <div className="pt-2 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 border-t border-[var(--border-color)]">
-
-                  <p className="text-xs text-[var(--text-secondary)]">
-                    Last sync:{' '}
-                    {formatDate(
-                      settings?.sync?.lastSyncAt
-                    )}
-                  </p>
-
-                  <div className="flex gap-2">
-
-                    <button
-                      type="button"
-                      onClick={
-                        saveSyncSettings
-                      }
-                      disabled={saving}
-                      className="px-4 py-2 text-sm font-medium text-white bg-[var(--primary)] hover:bg-[var(--primary-hover)] rounded-lg transition-colors disabled:opacity-50"
-                    >
-                      {saving
-                        ? 'Saving...'
-                        : 'Save Preferences'}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={
-                        handleSync
-                      }
-                      disabled={
-                        syncing ||
-                        !connected ||
-                        !selectedMetaAccountId
-                      }
-                      className="px-4 py-2 text-sm font-medium text-white bg-[var(--primary)] hover:bg-[var(--primary-hover)] rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
-                    >
-                      <RefreshCw
-                        className={`w-4 h-4 ${
-                          syncing
-                            ? 'animate-spin'
-                            : ''
-                        }`}
-                      />
-
-                      {syncing
-                        ? 'Syncing...'
-                        : 'Sync Data Now'}
-                    </button>
-
-                  </div>
-
-                </div>
 
               </div>
 
@@ -1376,119 +1327,59 @@ export default function SettingsPage() {
 
               <div>
                 <h3 className="font-semibold text-lg">
-                  Dashboard Preferences
+                  Appearance
                 </h3>
 
                 <p className="text-sm text-[var(--text-secondary)]">
-                  Customize display currency, timezone, and theme.
+                  Choose how Ad Pilot looks on your device.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-3">
 
-                <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  Theme
+                </label>
 
-                  <label className="text-sm font-medium">
-                    Reporting Timezone
-                  </label>
+                <div className="flex gap-3 max-w-sm">
 
-                  <select
-                    defaultValue="UTC"
-                    className="w-full px-3 py-2 bg-[var(--bg-accent)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setTheme(
+                        'light'
+                      )
+                    }
+                    className={`flex-1 p-3 rounded-lg border flex items-center justify-center gap-2 text-sm font-medium transition-colors ${
+                      theme ===
+                      'light'
+                        ? 'border-[var(--primary)] bg-[var(--bg-accent)] text-[var(--primary)]'
+                        : 'border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                    }`}
                   >
-                    <option value="UTC">
-                      UTC (Coordinated Universal Time)
-                    </option>
+                    <Sun className="w-4 h-4" />
+                    Light
+                  </button>
 
-                    <option value="EST">
-                      EST (Eastern Standard Time)
-                    </option>
-
-                    <option value="PKT">
-                      PKT (Pakistan Standard Time)
-                    </option>
-                  </select>
-
-                </div>
-
-                <div className="space-y-2">
-
-                  <label className="text-sm font-medium">
-                    Display Currency
-                  </label>
-
-                  <select
-                    defaultValue="USD"
-                    className="w-full px-3 py-2 bg-[var(--bg-accent)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setTheme(
+                        'dark'
+                      )
+                    }
+                    className={`flex-1 p-3 rounded-lg border flex items-center justify-center gap-2 text-sm font-medium transition-colors ${
+                      theme ===
+                      'dark'
+                        ? 'border-[var(--primary)] bg-[var(--bg-accent)] text-[var(--primary)]'
+                        : 'border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                    }`}
                   >
-                    <option value="USD">
-                      USD ($) - US Dollar
-                    </option>
-
-                    <option value="PKR">
-                      PKR (Rs) - Pakistani Rupee
-                    </option>
-                  </select>
+                    <Moon className="w-4 h-4" />
+                    Dark
+                  </button>
 
                 </div>
-
-                <div className="space-y-2 md:col-span-2">
-
-                  <label className="text-sm font-medium">
-                    Appearance Theme
-                  </label>
-
-                  <div className="flex gap-3 max-w-sm">
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setTheme('light')
-                      }
-                      className={`flex-1 p-2.5 rounded-lg border flex items-center justify-center gap-2 text-sm font-medium transition-colors ${
-                        theme === 'light'
-                          ? 'border-[var(--primary)] bg-[var(--bg-accent)] text-[var(--primary)]'
-                          : 'border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-                      }`}
-                    >
-                      <Sun className="w-4 h-4" />
-                      Light
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setTheme('dark')
-                      }
-                      className={`flex-1 p-2.5 rounded-lg border flex items-center justify-center gap-2 text-sm font-medium transition-colors ${
-                        theme === 'dark'
-                          ? 'border-[var(--primary)] bg-[var(--bg-accent)] text-[var(--primary)]'
-                          : 'border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-                      }`}
-                    >
-                      <Moon className="w-4 h-4" />
-                      Dark
-                    </button>
-
-                  </div>
-
-                </div>
-
-              </div>
-
-              <div className="flex justify-end pt-4 border-t border-[var(--border-color)]">
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    showSuccess(
-                      'Theme preference updated.'
-                    )
-                  }
-                  className="px-5 py-2 text-sm font-medium text-white bg-[var(--primary)] hover:bg-[var(--primary-hover)] rounded-lg transition-colors"
-                >
-                  Save Preferences
-                </button>
 
               </div>
 
@@ -1500,134 +1391,85 @@ export default function SettingsPage() {
 
               <div>
                 <h3 className="font-semibold text-lg">
-                  Alerts & Delivery
+                  Notifications
                 </h3>
 
                 <p className="text-sm text-[var(--text-secondary)]">
-                  Manage essential triggers and notification channels.
+                  Important updates and alerts from Ad Pilot.
                 </p>
               </div>
 
-              <div className="space-y-4">
+              {notificationsLoading ? (
+                <div className="py-10 text-center text-sm text-[var(--text-secondary)]">
+                  Loading notifications...
+                </div>
+              ) : notifications.length === 0 ? (
+                <div className="border border-[var(--border-color)] rounded-lg p-6 text-center">
 
-                <div className="flex items-center justify-between p-3.5 rounded-lg bg-[var(--bg-accent)]">
+                  <Bell className="w-8 h-8 mx-auto text-[var(--text-secondary)] mb-3" />
 
-                  <div>
-                    <p className="text-sm font-medium">
-                      Email Alerts
-                    </p>
+                  <p className="text-sm font-medium">
+                    No notifications
+                  </p>
 
-                    <p className="text-xs text-[var(--text-secondary)]">
-                      Receive performance anomaly and API renewal summaries.
-                    </p>
-                  </div>
-
-                  <input
-                    type="checkbox"
-                    checked={emailAlerts}
-                    onChange={(event) =>
-                      setEmailAlerts(
-                        event.target.checked
-                      )
-                    }
-                    className="w-4 h-4 rounded border-[var(--border-color)] text-[var(--primary)] focus:ring-[var(--primary)]"
-                  />
+                  <p className="text-xs text-[var(--text-secondary)] mt-1">
+                    You are all caught up.
+                  </p>
 
                 </div>
+              ) : (
+                <div className="space-y-3">
 
-                <div className="flex items-center justify-between p-3.5 rounded-lg bg-[var(--bg-accent)]">
+                  {notifications.map(
+                    (
+                      notification,
+                      index
+                    ) => (
+                      <div
+                        key={
+                          notification.id ??
+                          notification._id ??
+                          index
+                        }
+                        className="border border-[var(--border-color)] rounded-lg p-4 bg-[var(--bg-accent)]"
+                      >
 
-                  <div>
-                    <p className="text-sm font-medium">
-                      Campaign Alerts
-                    </p>
+                        <div className="flex items-start gap-3">
 
-                    <p className="text-xs text-[var(--text-secondary)]">
-                      Receive alerts about campaign performance.
-                    </p>
-                  </div>
+                          <Bell className="w-5 h-5 text-[var(--primary)] mt-0.5" />
 
-                  <input
-                    type="checkbox"
-                    checked={campaignAlerts}
-                    onChange={(event) =>
-                      setCampaignAlerts(
-                        event.target.checked
-                      )
-                    }
-                    className="w-4 h-4 rounded border-[var(--border-color)] text-[var(--primary)] focus:ring-[var(--primary)]"
-                  />
+                          <div className="flex-1">
 
-                </div>
+                            <p className="text-sm font-medium">
+                              {notification.title ??
+                                notification.type ??
+                                'Notification'}
+                            </p>
 
-                <div className="flex items-center justify-between p-3.5 rounded-lg bg-[var(--bg-accent)]">
+                            <p className="text-sm text-[var(--text-secondary)] mt-1">
+                              {notification.message ??
+                                notification.description ??
+                                'No additional information available.'}
+                            </p>
 
-                  <div>
-                    <p className="text-sm font-medium">
-                      Weekly Reports
-                    </p>
+                            {notification.createdAt && (
+                              <p className="text-xs text-[var(--text-secondary)] mt-2">
+                                {formatDate(
+                                  notification.createdAt
+                                )}
+                              </p>
+                            )}
 
-                    <p className="text-xs text-[var(--text-secondary)]">
-                      Receive weekly performance summaries.
-                    </p>
-                  </div>
+                          </div>
 
-                  <input
-                    type="checkbox"
-                    checked={weeklyReports}
-                    onChange={(event) =>
-                      setWeeklyReports(
-                        event.target.checked
-                      )
-                    }
-                    className="w-4 h-4 rounded border-[var(--border-color)] text-[var(--primary)] focus:ring-[var(--primary)]"
-                  />
+                        </div>
 
-                </div>
-
-                <div className="flex items-center justify-between p-3.5 rounded-lg bg-[var(--bg-accent)]">
-
-                  <div>
-                    <p className="text-sm font-medium">
-                      Sync Failure Alerts
-                    </p>
-
-                    <p className="text-xs text-[var(--text-secondary)]">
-                      Receive alerts when dashboard synchronization fails.
-                    </p>
-                  </div>
-
-                  <input
-                    type="checkbox"
-                    checked={syncFailureAlerts}
-                    onChange={(event) =>
-                      setSyncFailureAlerts(
-                        event.target.checked
-                      )
-                    }
-                    className="w-4 h-4 rounded border-[var(--border-color)] text-[var(--primary)] focus:ring-[var(--primary)]"
-                  />
+                      </div>
+                    )
+                  )}
 
                 </div>
-
-              </div>
-
-              <div className="flex justify-end pt-4 border-t border-[var(--border-color)]">
-
-                <button
-                  type="button"
-                  onClick={
-                    saveNotifications
-                  }
-                  disabled={saving}
-                  className="px-5 py-2 text-sm font-medium text-white bg-[var(--primary)] hover:bg-[var(--primary-hover)] rounded-lg transition-colors disabled:opacity-50"
-                >
-                  {saving
-                    ? 'Saving...'
-                    : 'Save Changes'}
-                </button>
-
-              </div>
+              )}
 
             </div>
           )}

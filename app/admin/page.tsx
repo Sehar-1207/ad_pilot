@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -67,13 +66,11 @@ export default function AdminOverviewPage() {
           backgroundColor: 'var(--bg-primary)',
           color: 'var(--text-primary)',
         }}
-        className="w-full min-h-full transition-colors duration-300"
+        className="w-full h-full min-h-0 overflow-hidden transition-colors duration-300"
       >
-        <div className="max-w-7xl mx-auto pb-10">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-sm opacity-70">
-              Loading admin dashboard...
-            </div>
+        <div className="w-full h-full flex items-center justify-center">
+          <div className="text-sm opacity-70">
+            Loading admin dashboard...
           </div>
         </div>
       </div>
@@ -87,10 +84,10 @@ export default function AdminOverviewPage() {
           backgroundColor: 'var(--bg-primary)',
           color: 'var(--text-primary)',
         }}
-        className="w-full min-h-full transition-colors duration-300"
+        className="w-full h-full min-h-0 overflow-hidden transition-colors duration-300"
       >
-        <div className="max-w-7xl mx-auto pb-10">
-          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-5">
+        <div className="w-full h-full flex items-center justify-center px-2">
+          <div className="w-full max-w-7xl rounded-xl border border-red-500/30 bg-red-500/10 p-2.5">
             <h2 className="font-semibold text-red-500">
               Failed to load dashboard
             </h2>
@@ -173,34 +170,30 @@ export default function AdminOverviewPage() {
         backgroundColor: 'var(--bg-primary)',
         color: 'var(--text-primary)',
       }}
-      className="w-full min-h-full transition-colors duration-300"
+      className="w-full h-full min-h-0 overflow-hidden transition-colors duration-300 flex flex-col"
     >
-      <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8 pb-10">
+      <div className="w-full h-full min-h-0 flex flex-col px-2 sm:px-3 lg:px-4">
 
-        <div>
+        <div className="shrink-0 pt-2 sm:pt-3">
           <h1
             style={{ color: 'var(--text-primary)' }}
             className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight"
           >
             System Analytics & Controls
           </h1>
-
-          <p
-            style={{ color: 'var(--text-primary)' }}
-            className="text-xs sm:text-sm mt-1 opacity-80 font-normal"
-          >
-            Monitor global Ad Pilot usage, user accounts, and Pro tier
-            upgrades.
-          </p>
         </div>
 
-        <StatsGrid stats={stats} />
+        <div className="shrink-0 mt-5 sm:mt-6">
+          <StatsGrid stats={stats} />
+        </div>
 
-        <UsersTable
-          users={filteredUsers}
-          searchQuery={searchQuery}
-          onSearchChange={(e) => setSearchQuery(e.target.value)}
-        />
+        <div className="flex-1 min-h-0 mt-5 sm:mt-6 pb-2 overflow-hidden">
+          <UsersTable
+            users={filteredUsers}
+            searchQuery={searchQuery}
+            onSearchChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
 
       </div>
     </div>
