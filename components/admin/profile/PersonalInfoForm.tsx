@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -29,9 +28,6 @@ export default function PersonalInfoForm() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
 
-  // =========================
-  // LOAD ADMIN PROFILE
-  // =========================
   useEffect(() => {
     const loadProfile = async () => {
       try {
@@ -39,8 +35,6 @@ export default function PersonalInfoForm() {
         setError('');
 
         const response = await getAdminProfile();
-
-        console.log('Admin profile response:', response);
 
         if (!response?.success) {
           throw new Error(
@@ -50,7 +44,7 @@ export default function PersonalInfoForm() {
           );
         }
 
-        const profile = response?.admin;
+        const profile = response?.admin || response?.data;
 
         if (!profile) {
           throw new Error('Admin profile data not found');
@@ -82,9 +76,6 @@ export default function PersonalInfoForm() {
     loadProfile();
   }, []);
 
-  // =========================
-  // HANDLE FORM SUBMIT
-  // =========================
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -98,8 +89,6 @@ export default function PersonalInfoForm() {
         email: formData.email,
       });
 
-      console.log('Updated admin profile response:', response);
-
       if (!response?.success) {
         throw new Error(
           response?.message ||
@@ -108,13 +97,14 @@ export default function PersonalInfoForm() {
         );
       }
 
-      if (response?.admin) {
+      const admin = response?.admin;
+
+      if (admin) {
         setFormData((prev) => ({
           ...prev,
-          name: response.admin.name ?? prev.name,
-          email: response.admin.email ?? prev.email,
-          avatarUrl:
-            response.admin.avatarUrl ?? prev.avatarUrl,
+          name: admin.name ?? prev.name,
+          email: admin.email ?? prev.email,
+          avatarUrl: admin.avatarUrl ?? prev.avatarUrl,
         }));
       }
 
@@ -137,56 +127,67 @@ export default function PersonalInfoForm() {
     }
   };
 
-  // =========================
-  // LOADING STATE
-  // =========================
   if (loading) {
     return (
       <div
         style={{
           backgroundColor: 'var(--bg-surface)',
           borderColor: 'var(--border-color)',
-          color: 'var(--text-primary)',
         }}
-        className="border rounded-xl p-6 shadow-sm"
+        className="w-full min-w-0 border rounded-xl p-4 shadow-sm"
       >
-        <p className="text-sm opacity-70">
+        <p
+          style={{
+            color: 'var(--text-primary)',
+          }}
+          className="text-xs opacity-70"
+        >
           Loading profile...
         </p>
       </div>
     );
   }
 
-  // =========================
-  // PROFILE FORM
-  // =========================
   return (
     <div
       style={{
         backgroundColor: 'var(--bg-surface)',
         borderColor: 'var(--border-color)',
       }}
-      className="border rounded-xl p-6 space-y-6 transition-colors shadow-sm"
+      className="w-full min-w-0 border rounded-xl p-4 shadow-sm"
     >
-      {/* HEADER */}
-      <div>
-        <h2
-          style={{ color: 'var(--text-primary)' }}
-          className="text-base font-bold"
-        >
-          Personal Information
-        </h2>
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <div className="min-w-0">
+          <h2
+            style={{
+              color: 'var(--text-primary)',
+            }}
+            className="text-sm font-bold"
+          >
+            Personal Information
+          </h2>
 
-        <p
-          style={{ color: 'var(--text-primary)' }}
-          className="text-xs opacity-60 mt-0.5"
+          <p
+            style={{
+              color: 'var(--text-primary)',
+            }}
+            className="text-[10px] opacity-60 mt-0.5"
+          >
+            Manage your profile and administrative contact.
+          </p>
+        </div>
+
+        <div
+          style={{
+            backgroundColor: 'var(--bg-accent)',
+            color: 'var(--primary)',
+          }}
+          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
         >
-          Update your public profile details and administrative
-          contact.
-        </p>
+          <User className="w-4 h-4" />
+        </div>
       </div>
 
-      {/* ERROR MESSAGE */}
       {error && (
         <div
           style={{
@@ -194,27 +195,26 @@ export default function PersonalInfoForm() {
             borderColor: 'rgba(239, 68, 68, 0.3)',
             color: 'var(--text-primary)',
           }}
-          className="border rounded-lg px-4 py-3 text-xs"
+          className="border rounded-lg px-3 py-2 mb-3 text-[10px]"
         >
           {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* ADMIN AVATAR / BASIC INFO */}
+      <form onSubmit={handleSubmit} className="space-y-3">
+
         <div
           style={{
             borderColor: 'var(--border-color)',
           }}
-          className="flex items-center gap-4 pb-4 border-b"
+          className="flex items-center gap-3 pb-3 border-b"
         >
-          {/* AVATAR */}
           <div
             style={{
               backgroundColor: 'var(--primary)',
               color: '#ffffff',
             }}
-            className="w-16 h-16 rounded-full font-bold text-xl flex items-center justify-center shrink-0 border-2 border-white/20 shadow-sm"
+            className="w-10 h-10 rounded-full font-bold text-xs flex items-center justify-center shrink-0"
           >
             {formData.name
               ? formData.name
@@ -227,113 +227,89 @@ export default function PersonalInfoForm() {
               : 'AD'}
           </div>
 
-          {/* NAME / ROLE */}
-          <div className="space-y-1">
+          <div className="min-w-0">
             <h3
-              style={{ color: 'var(--text-primary)' }}
-              className="text-sm font-semibold"
+              style={{
+                color: 'var(--text-primary)',
+              }}
+              className="text-xs font-semibold truncate"
             >
               {formData.name || 'Administrator'}
             </h3>
 
             <p
-              style={{ color: 'var(--text-primary)' }}
-              className="text-xs opacity-60"
+              style={{
+                color: 'var(--text-primary)',
+              }}
+              className="text-[10px] opacity-60"
             >
               {formData.role}
             </p>
-
-            <button
-              type="button"
-              disabled
-              style={{
-                color: 'var(--primary)',
-              }}
-              className="text-xs font-semibold opacity-50 cursor-not-allowed"
-            >
-              Change Avatar
-            </button>
           </div>
         </div>
 
-        {/* NAME + EMAIL */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* FULL NAME */}
-          <div className="space-y-1.5">
-            <label
-              style={{
-                color: 'var(--text-primary)',
-              }}
-              className="text-xs font-semibold flex items-center gap-1.5 opacity-80"
-            >
-              <User className="w-3.5 h-3.5 opacity-50" />
-
-              Full Name
-            </label>
-
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  name: e.target.value,
-                }))
-              }
-              required
-              style={{
-                backgroundColor: 'var(--bg-primary)',
-                borderColor: 'var(--border-color)',
-                color: 'var(--text-primary)',
-              }}
-              className="w-full border rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-[var(--primary)] transition-colors"
-            />
-          </div>
-
-          {/* EMAIL */}
-          <div className="space-y-1.5">
-            <label
-              style={{
-                color: 'var(--text-primary)',
-              }}
-              className="text-xs font-semibold flex items-center gap-1.5 opacity-80"
-            >
-              <Mail className="w-3.5 h-3.5 opacity-50" />
-
-              Email Address
-            </label>
-
-            <input
-              type="email"
-              disabled
-              value={formData.email}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  email: e.target.value,
-                }))
-              }
-              required
-              style={{
-                backgroundColor: 'var(--bg-primary)',
-                borderColor: 'var(--border-color)',
-                color: 'var(--text-primary)',
-              }}
-              className="w-full border rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-[var(--primary)] transition-colors"
-            />
-          </div>
-        </div>
-
-        {/* ADMIN ROLE */}
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <label
             style={{
               color: 'var(--text-primary)',
             }}
-            className="text-xs font-semibold flex items-center gap-1.5 opacity-80"
+            className="text-[10px] font-semibold flex items-center gap-1.5 opacity-80"
           >
-            <Shield className="w-3.5 h-3.5 opacity-50" />
+            <User className="w-3 h-3 opacity-50" />
+            Full Name
+          </label>
 
+          <input
+            type="text"
+            value={formData.name}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                name: e.target.value,
+              }))
+            }
+            required
+            style={{
+              backgroundColor: 'var(--bg-primary)',
+              borderColor: 'var(--border-color)',
+              color: 'var(--text-primary)',
+            }}
+            className="w-full h-8 border rounded-lg px-3 text-[11px] font-medium focus:outline-none focus:ring-1 focus:ring-[var(--primary)]"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label
+            style={{
+              color: 'var(--text-primary)',
+            }}
+            className="text-[10px] font-semibold flex items-center gap-1.5 opacity-80"
+          >
+            <Mail className="w-3 h-3 opacity-50" />
+            Email Address
+          </label>
+
+          <input
+            type="email"
+            disabled
+            value={formData.email}
+            style={{
+              backgroundColor: 'var(--bg-primary)',
+              borderColor: 'var(--border-color)',
+              color: 'var(--text-primary)',
+            }}
+            className="w-full h-8 border rounded-lg px-3 text-[11px] font-medium opacity-60 cursor-not-allowed"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label
+            style={{
+              color: 'var(--text-primary)',
+            }}
+            className="text-[10px] font-semibold flex items-center gap-1.5 opacity-80"
+          >
+            <Shield className="w-3 h-3 opacity-50" />
             Administrative Role
           </label>
 
@@ -346,12 +322,11 @@ export default function PersonalInfoForm() {
               borderColor: 'var(--border-color)',
               color: 'var(--text-primary)',
             }}
-            className="w-full border rounded-lg px-3 py-2 text-xs font-medium opacity-50 cursor-not-allowed"
+            className="w-full h-8 border rounded-lg px-3 text-[11px] font-medium opacity-60 cursor-not-allowed"
           />
         </div>
 
-        {/* SAVE BUTTON */}
-        <div className="pt-2 flex justify-end">
+        <div className="flex justify-end pt-1">
           <button
             type="submit"
             disabled={saving}
@@ -359,14 +334,16 @@ export default function PersonalInfoForm() {
               backgroundColor: 'var(--primary)',
               color: '#ffffff',
             }}
-            className="flex items-center gap-2 px-4 py-2 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-xs font-semibold transition-all shadow-sm"
+            className="h-8 px-3 flex items-center gap-1.5 rounded-lg text-[10px] font-semibold hover:opacity-90 disabled:opacity-50"
           >
-            {saved && <Check className="w-4 h-4" />}
+            {saved && (
+              <Check className="w-3.5 h-3.5" />
+            )}
 
             {saving
               ? 'Saving...'
               : saved
-                ? 'Changes Saved'
+                ? 'Saved'
                 : 'Save Profile'}
           </button>
         </div>

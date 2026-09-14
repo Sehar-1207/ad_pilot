@@ -14,37 +14,47 @@ interface UserTableRowProps {
   user: AdminUser;
 }
 
-export default function UserTableRow({ user }: UserTableRowProps) {
+export default function UserTableRow({
+  user,
+}: UserTableRowProps) {
   return (
-    <tr className="hover:bg-[var(--bg-accent)] transition-colors bg-transparent">
-      <td className="px-6 py-4 whitespace-nowrap">
+    <tr className="bg-transparent hover:bg-[var(--bg-accent)] transition-colors">
+      <td className="px-6 py-4 whitespace-nowrap min-w-[220px]">
         <div
-          style={{ color: 'var(--text-primary)' }}
+          style={{
+            color: 'var(--text-primary)',
+          }}
           className="font-bold text-xs sm:text-sm"
         >
           {user.name}
         </div>
 
         <div
-          style={{ color: 'var(--text-secondary)' }}
+          style={{
+            color: 'var(--text-secondary)',
+          }}
           className="text-xs font-medium mt-0.5"
         >
           {user.email}
         </div>
       </td>
 
-      <td className="px-6 py-4 whitespace-nowrap">
+      <td className="px-6 py-4 whitespace-nowrap min-w-[130px]">
         <span
           style={
             user.plan === 'Pro'
               ? {
-                  backgroundColor: 'rgba(59, 130, 246, 0.12)',
-                  borderColor: 'rgba(59, 130, 246, 0.3)',
+                  backgroundColor:
+                    'rgba(59, 130, 246, 0.12)',
+                  borderColor:
+                    'rgba(59, 130, 246, 0.3)',
                   color: 'var(--primary)',
                 }
               : {
-                  backgroundColor: 'var(--bg-accent)',
-                  borderColor: 'var(--border-color)',
+                  backgroundColor:
+                    'var(--bg-accent)',
+                  borderColor:
+                    'var(--border-color)',
                   color: 'var(--text-primary)',
                 }
           }
@@ -54,9 +64,11 @@ export default function UserTableRow({ user }: UserTableRowProps) {
         </span>
       </td>
 
-      <td className="px-6 py-4 whitespace-nowrap">
+      <td className="px-6 py-4 whitespace-nowrap min-w-[150px]">
         <span
-          style={{ color: 'var(--text-primary)' }}
+          style={{
+            color: 'var(--text-primary)',
+          }}
           className="flex items-center gap-2 text-xs font-medium"
         >
           <span
@@ -74,16 +86,20 @@ export default function UserTableRow({ user }: UserTableRowProps) {
       </td>
 
       <td
-        style={{ color: 'var(--text-primary)' }}
-        className="px-6 py-4 whitespace-nowrap font-mono font-bold text-xs"
+        style={{
+          color: 'var(--text-primary)',
+        }}
+        className="px-6 py-4 whitespace-nowrap min-w-[150px] font-mono font-bold text-xs"
       >
         {user.spend}
       </td>
 
-      <td className="px-6 py-4 whitespace-nowrap text-right">
+      <td className="px-6 py-4 whitespace-nowrap min-w-[80px] text-right">
         <button
           type="button"
-          style={{ color: 'var(--text-primary)' }}
+          style={{
+            color: 'var(--text-primary)',
+          }}
           className="p-1.5 rounded-lg hover:bg-[var(--bg-accent)] transition-colors opacity-80 hover:opacity-100"
           aria-label={`Actions for ${user.name}`}
         >

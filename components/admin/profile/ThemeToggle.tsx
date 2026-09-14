@@ -15,15 +15,25 @@ export default function ThemeToggle() {
   if (!mounted) {
     return (
       <div
-        style={{ backgroundColor: 'var(--bg-accent)' }}
-        className="h-10 w-48 animate-pulse rounded-lg"
+        style={{
+          backgroundColor: 'var(--bg-accent)',
+        }}
+        className="h-8 w-36 animate-pulse rounded-lg"
       />
     );
   }
 
   const themes = [
-    { id: 'light', label: 'Light', icon: Sun },
-    { id: 'dark', label: 'Dark', icon: Moon },
+    {
+      id: 'light',
+      label: 'Light',
+      icon: Sun,
+    },
+    {
+      id: 'dark',
+      label: 'Dark',
+      icon: Moon,
+    },
   ];
 
   return (
@@ -32,7 +42,7 @@ export default function ThemeToggle() {
         backgroundColor: 'var(--bg-primary)',
         borderColor: 'var(--border-color)',
       }}
-      className="flex items-center gap-1 p-1 border rounded-lg w-fit transition-colors"
+      className="flex items-center gap-1 p-1 border rounded-lg w-fit"
     >
       {themes.map((t) => {
         const Icon = t.icon;
@@ -41,6 +51,7 @@ export default function ThemeToggle() {
         return (
           <button
             key={t.id}
+            type="button"
             onClick={() => setTheme(t.id)}
             style={
               isActive
@@ -52,13 +63,13 @@ export default function ThemeToggle() {
                     color: 'var(--text-primary)',
                   }
             }
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+            className={`h-7 flex items-center gap-1.5 px-3 rounded-md text-[10px] font-semibold transition-all ${
               !isActive
                 ? 'opacity-70 hover:opacity-100 hover:bg-[var(--bg-accent)]'
                 : 'shadow-sm'
             }`}
           >
-            <Icon className="w-3.5 h-3.5" />
+            <Icon className="w-3 h-3" />
             {t.label}
           </button>
         );

@@ -17,39 +17,41 @@ interface AdminProfile {
 }
 
 export default function AdminProfilePage() {
-  const [profile, setProfile] =
-    useState<AdminProfile | null>(null);
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [error, setError] =
-    useState('');
+  const [profile, setProfile] = useState<AdminProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   const loadProfile = async () => {
     try {
       setLoading(true);
       setError('');
 
-      const response =
-        await getAdminProfile();
+      const response = await getAdminProfile();
 
       if (!response?.success) {
         throw new Error(
           response?.error ||
+            response?.message ||
             'Failed to load admin profile.'
         );
       }
 
-      setProfile(response.data);
+      const admin = response?.admin || response?.data;
+
+      if (admin) {
+        setProfile({
+          id: admin.id || '',
+          name: admin.name || '',
+          email: admin.email || '',
+          role: admin.role || 'ADMIN',
+        });
+      }
     } catch (err: any) {
-      console.error(
-        'Admin profile error:',
-        err
-      );
+      console.error('Admin profile error:', err);
 
       setError(
         err?.response?.data?.error ||
+          err?.response?.data?.message ||
           err?.message ||
           'Failed to load admin profile.'
       );
@@ -66,13 +68,12 @@ export default function AdminProfilePage() {
     return (
       <div
         style={{
-          backgroundColor:
-            'var(--bg-primary)',
+          backgroundColor: 'var(--bg-primary)',
           color: 'var(--text-primary)',
         }}
-        className="w-full min-h-screen flex items-center justify-center"
+        className="w-full h-full min-h-0 flex items-center justify-center"
       >
-        <p className="text-sm opacity-70">
+        <p className="text-xs opacity-70">
           Loading admin profile...
         </p>
       </div>
@@ -82,19 +83,19 @@ export default function AdminProfilePage() {
   return (
     <div
       style={{
-        backgroundColor:
-          'var(--bg-primary)',
+        backgroundColor: 'var(--bg-primary)',
         color: 'var(--text-primary)',
       }}
-      className="w-full min-h-screen px-4 py-8 transition-colors duration-300"
+      className="w-full h-full min-h-0 overflow-hidden"
     >
-      <div className="max-w-4xl mx-auto space-y-8 pb-10">
-        <div className="text-center">
+      <div className="w-full max-w-6xl mx-auto h-full min-h-0 px-4 sm:px-5 lg:px-6 py-4 flex flex-col">
+
+        <div className="shrink-0 text-center mb-3">
           <h1
             style={{
               color: 'var(--text-primary)',
             }}
-            className="text-2xl font-bold tracking-tight"
+            className="text-xl sm:text-2xl font-bold tracking-tight"
           >
             Admin Profile Settings
           </h1>
@@ -103,25 +104,24 @@ export default function AdminProfilePage() {
             style={{
               color: 'var(--text-primary)',
             }}
-            className="text-sm mt-1 opacity-80 font-normal"
+            className="text-[11px] sm:text-xs mt-1 opacity-70"
           >
-            Manage your account preferences,
-            theme appearance, and security
-            credentials.
+            Manage your account preferences, theme appearance,
+            and security credentials.
           </p>
         </div>
 
         {error && (
-          <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3">
-            <div className="flex items-center justify-between gap-4">
-              <p className="text-sm text-red-500">
+          <div className="shrink-0 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 mb-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[11px] text-red-500">
                 {error}
               </p>
 
               <button
                 type="button"
                 onClick={loadProfile}
-                className="text-xs font-medium text-red-500 hover:underline"
+                className="shrink-0 text-[11px] font-semibold text-red-500 hover:underline"
               >
                 Retry
               </button>
@@ -131,19 +131,17 @@ export default function AdminProfilePage() {
 
         <div
           style={{
-            backgroundColor:
-              'var(--bg-surface)',
-            borderColor:
-              'var(--border-color)',
+            backgroundColor: 'var(--bg-surface)',
+            borderColor: 'var(--border-color)',
           }}
-          className="border rounded-xl p-6 space-y-4 text-center flex flex-col items-center justify-center shadow-sm transition-colors"
+          className="shrink-0 border rounded-xl px-4 py-3 mb-3 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3"
         >
-          <div>
+          <div className="min-w-0">
             <h2
               style={{
                 color: 'var(--text-primary)',
               }}
-              className="text-base font-bold"
+              className="text-sm font-bold"
             >
               Appearance Theme
             </h2>
@@ -152,55 +150,65 @@ export default function AdminProfilePage() {
               style={{
                 color: 'var(--text-primary)',
               }}
-              className="text-xs mt-0.5 opacity-80 font-medium"
+              className="text-[10px] mt-0.5 opacity-60"
             >
-              Select your preferred visual
-              style for the Ad Pilot console
-              interface.
+              Select your preferred visual style for the
+              Ad Pilot console.
             </p>
           </div>
 
-          <div className="flex justify-center w-full">
+          <div className="shrink-0">
             <ThemeToggle />
           </div>
         </div>
 
-        <PersonalInfoForm />
-
-        <SecuritySettings />
-
         <div
-          style={{
-            backgroundColor:
-              'var(--bg-accent)',
-            borderColor:
-              'var(--border-color)',
-          }}
-          className="p-4 rounded-xl border flex flex-col sm:flex-row items-center justify-between text-xs gap-3"
+          className="
+            flex-1
+            min-h-0
+            overflow-y-auto
+            lg:overflow-hidden
+            overscroll-contain
+            pr-1
+            lg:pr-0
+          "
         >
-          <div
-            style={{
-              color: 'var(--primary)',
-            }}
-            className="flex items-center gap-2 font-bold"
-          >
-            <ShieldCheck className="w-4 h-4 shrink-0" />
-
-            <span>
-              Root Administrator Session Active
-            </span>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4 items-stretch">
+            <PersonalInfoForm />
+            <SecuritySettings />
           </div>
 
-          <span
+          <div
             style={{
-              color: 'var(--text-primary)',
+              backgroundColor: 'var(--bg-accent)',
+              borderColor: 'var(--border-color)',
             }}
-            className="text-[11px] opacity-80 font-medium"
+            className="mt-3 lg:mt-4 mb-2 p-3 rounded-xl border flex flex-col sm:flex-row items-center justify-between text-[10px] gap-2"
           >
-            {profile?.role
-              ? `Role: ${profile.role}`
-              : 'Administrator'}
-          </span>
+            <div
+              style={{
+                color: 'var(--primary)',
+              }}
+              className="flex items-center gap-2 font-bold"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+
+              <span>
+                Root Administrator Session Active
+              </span>
+            </div>
+
+            <span
+              style={{
+                color: 'var(--text-primary)',
+              }}
+              className="opacity-70 font-medium"
+            >
+              {profile?.role
+                ? `Role: ${profile.role}`
+                : 'Administrator'}
+            </span>
+          </div>
         </div>
       </div>
     </div>

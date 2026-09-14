@@ -21,7 +21,7 @@ export const connectMetaAdAccount = async (adAccountId: string) => {
 };
 
 export const disconnectMeta = async () => {
-    const response = await apiClient.post("/meta/disconnect");
+    const response = await apiClient.delete("/meta/disconnect");
     return response.data;
 };
 

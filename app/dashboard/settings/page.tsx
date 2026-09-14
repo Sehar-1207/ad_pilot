@@ -7,7 +7,6 @@ import {
   RefreshCw,
   CheckCircle2,
   Sliders,
-  Bell,
   CreditCard,
   Moon,
   Sun,
@@ -28,7 +27,6 @@ import {
 type ActiveTab =
   | 'integrations'
   | 'preferences'
-  | 'notifications'
   | 'billing';
 
 interface AdAccount {
@@ -79,17 +77,6 @@ interface SubscriptionData {
   cancelAtPeriodEnd?: boolean;
 }
 
-interface Notification {
-  id?: string;
-  _id?: string;
-  title?: string;
-  message?: string;
-  description?: string;
-  type?: string;
-  createdAt?: string;
-  read?: boolean;
-  isRead?: boolean;
-}
 
 const extractData = (response: any) => {
   return response?.data?.data ?? response?.data ?? response;
@@ -166,14 +153,8 @@ export default function SettingsPage() {
   const [subscription, setSubscription] =
     useState<SubscriptionData | null>(null);
 
-  const [notifications, setNotifications] =
-    useState<Notification[]>([]);
-
   const [loading, setLoading] =
     useState(true);
-
-  const [notificationsLoading, setNotificationsLoading] =
-    useState(false);
 
   const [saving, setSaving] =
     useState(false);
@@ -313,48 +294,6 @@ export default function SettingsPage() {
     }
   };
 
-  const loadNotifications = async () => {
-    try {
-      setNotificationsLoading(true);
-
-      const response =
-        await apiClient.get(
-          '/getNotifications '
-        );
-
-      const data =
-        response?.data?.data ??
-        response?.data ??
-        [];
-
-      const notificationList =
-        Array.isArray(data)
-          ? data
-          : Array.isArray(data?.notifications)
-            ? data.notifications
-            : [];
-
-      setNotifications(
-        notificationList
-      );
-    } catch (err) {
-      console.error(
-        'Notifications loading error:',
-        err
-      );
-
-      showError(
-        getErrorMessage(
-          err,
-          'Unable to load notifications.'
-        )
-      );
-    } finally {
-      setNotificationsLoading(
-        false
-      );
-    }
-  };
 
   const loadSettings = async () => {
     try {
@@ -909,15 +848,6 @@ export default function SettingsPage() {
     subscription?.currentPeriodEnd ??
     null;
 
-  const handleNotificationsTab =
-    async () => {
-      setActiveTab(
-        'notifications'
-      );
-
-      await loadNotifications();
-    };
-
   if (loading) {
     return (
       <div className="min-h-screen text-[var(--text-primary)] p-6 md:p-10">
@@ -991,21 +921,6 @@ export default function SettingsPage() {
           >
             <Sliders className="w-4 h-4" />
             Preferences
-          </button>
-
-          <button
-            onClick={
-              handleNotificationsTab
-            }
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
-              activeTab ===
-              'notifications'
-                ? 'border-[var(--primary)] text-[var(--primary)]'
-                : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-            }`}
-          >
-            <Bell className="w-4 h-4" />
-            Notifications
           </button>
 
           <button
@@ -1382,94 +1297,6 @@ export default function SettingsPage() {
                 </div>
 
               </div>
-
-            </div>
-          )}
-
-          {activeTab === 'notifications' && (
-            <div className="border border-[var(--border-color)] rounded-xl p-6 space-y-6">
-
-              <div>
-                <h3 className="font-semibold text-lg">
-                  Notifications
-                </h3>
-
-                <p className="text-sm text-[var(--text-secondary)]">
-                  Important updates and alerts from Ad Pilot.
-                </p>
-              </div>
-
-              {notificationsLoading ? (
-                <div className="py-10 text-center text-sm text-[var(--text-secondary)]">
-                  Loading notifications...
-                </div>
-              ) : notifications.length === 0 ? (
-                <div className="border border-[var(--border-color)] rounded-lg p-6 text-center">
-
-                  <Bell className="w-8 h-8 mx-auto text-[var(--text-secondary)] mb-3" />
-
-                  <p className="text-sm font-medium">
-                    No notifications
-                  </p>
-
-                  <p className="text-xs text-[var(--text-secondary)] mt-1">
-                    You are all caught up.
-                  </p>
-
-                </div>
-              ) : (
-                <div className="space-y-3">
-
-                  {notifications.map(
-                    (
-                      notification,
-                      index
-                    ) => (
-                      <div
-                        key={
-                          notification.id ??
-                          notification._id ??
-                          index
-                        }
-                        className="border border-[var(--border-color)] rounded-lg p-4 bg-[var(--bg-accent)]"
-                      >
-
-                        <div className="flex items-start gap-3">
-
-                          <Bell className="w-5 h-5 text-[var(--primary)] mt-0.5" />
-
-                          <div className="flex-1">
-
-                            <p className="text-sm font-medium">
-                              {notification.title ??
-                                notification.type ??
-                                'Notification'}
-                            </p>
-
-                            <p className="text-sm text-[var(--text-secondary)] mt-1">
-                              {notification.message ??
-                                notification.description ??
-                                'No additional information available.'}
-                            </p>
-
-                            {notification.createdAt && (
-                              <p className="text-xs text-[var(--text-secondary)] mt-2">
-                                {formatDate(
-                                  notification.createdAt
-                                )}
-                              </p>
-                            )}
-
-                          </div>
-
-                        </div>
-
-                      </div>
-                    )
-                  )}
-
-                </div>
-              )}
 
             </div>
           )}

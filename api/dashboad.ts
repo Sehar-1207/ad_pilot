@@ -50,51 +50,6 @@ export const getCampaign = async (campaignId: string) => {
   return response.data;
 };
 
-export const askAI = async (data: {
-  message: string;
-  conversationId?: string;
-}) => {
-  const response = await apiClient.post(
-    "/dashboard/ai",
-    data
-  );
-
-  return response.data;
-};
-
-export const askCampaignAI = async (
-  campaignId: string,
-  data: {
-    message: string;
-    conversationId?: string;
-  }
-) => {
-  const response = await apiClient.post(
-    `/dashboard/campaigns/${campaignId}/ai`,
-    data
-  );
-
-  return response.data;
-};
-
-export const getAIConversations = async () => {
-  const response = await apiClient.get(
-    "/dashboard/ai/conversations"
-  );
-
-  return response.data;
-};
-
-export const getAIConversation = async (
-  conversationId: string
-) => {
-  const response = await apiClient.get(
-    `/dashboard/ai/conversations/${conversationId}`
-  );
-
-  return response.data;
-};
-
 export const getCampaignAIInsights = async (
   campaignId: string
 ) => {
