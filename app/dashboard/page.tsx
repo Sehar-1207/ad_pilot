@@ -180,10 +180,10 @@ export default function DashboardPage() {
 
           roas:
             campaign.roas !== undefined &&
-            campaign.roas !== null
+              campaign.roas !== null
               ? `${Number(
-                  campaign.roas
-                ).toFixed(2)}x`
+                campaign.roas
+              ).toFixed(2)}x`
               : '-',
 
           status: campaign.status,
@@ -232,22 +232,14 @@ export default function DashboardPage() {
     try {
       setSyncing(true);
       setError(null);
-
-      await syncDashboard();
-
+      const response = await syncDashboard();
+      console.log('Dashboard sync response:', response);
       await loadDashboard();
-    } catch (err) {
-      console.error(
-        'Dashboard sync error:',
-        err
-      );
-
-      setError(
-        'Failed to sync dashboard data. Please try again.'
-      );
-    } finally {
-      setSyncing(false);
-    }
+    } catch (err: any) {
+      console.error('Dashboard sync error:', err);
+      const message = err?.response?.data?.message || err?.response?.data?.error || err?.message || 'Failed to sync dashboard data. Please try again.';
+      setError(message);
+    } finally { setSyncing(false); }
   };
 
   if (loading) {

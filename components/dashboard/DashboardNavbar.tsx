@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Bell, CheckCircle2 } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import { FaFacebook } from 'react-icons/fa6';
-import { connectMeta } from '@/api/meta';
+import { connectMeta, getMetaStatus } from '@/api/meta';
 import apiClient from '@/api/client';
 
 interface DashboardNavbarProps {
@@ -24,12 +24,26 @@ interface ProfileResponse {
   message?: string;
 }
 
+interface MetaStatusResponse {
+  success: boolean;
+  connected: boolean;
+  metaUserId?: string | null;
+  adAccountId?: string | null;
+  tokenExpiresAt?: string | null;
+}
+
 export default function DashboardNavbar({
   isMetaConnected = false,
 }: DashboardNavbarProps) {
   const [userName, setUserName] = useState('');
   const [userRole, setUserRole] = useState('');
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [metaConnected, setMetaConnected] =
+    useState(isMetaConnected);
+
+  useEffect(() => {
+    setMetaConnected(isMetaConnected);
+  }, [isMetaConnected]);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -42,7 +56,11 @@ export default function DashboardNavbar({
         const profile = response.data?.data;
 
         if (profile) {
-          setUserName(profile.name || profile.email || 'User');
+          setUserName(
+            profile.name ||
+              profile.email ||
+              'User'
+          );
 
           setUserRole(
             profile.role
@@ -67,6 +85,63 @@ export default function DashboardNavbar({
     loadProfile();
   }, []);
 
+  useEffect(() => {
+    const loadMetaStatus = async () => {
+      try {
+        const response =
+          await getMetaStatus();
+
+        if (response?.success) {
+          setMetaConnected(
+            response.connected === true
+          );
+        } else {
+          setMetaConnected(false);
+        }
+      } catch (error) {
+        console.error(
+          'Failed to load Meta status:',
+          error
+        );
+
+        setMetaConnected(false);
+      }
+    };
+
+    loadMetaStatus();
+  }, []);
+
+  useEffect(() => {
+    const handleFocus = () => {
+      getMetaStatus()
+        .then((response) => {
+          if (response?.success) {
+            setMetaConnected(
+              response.connected === true
+            );
+          }
+        })
+        .catch((error) => {
+          console.error(
+            'Failed to refresh Meta status:',
+            error
+          );
+        });
+    };
+
+    window.addEventListener(
+      'focus',
+      handleFocus
+    );
+
+    return () => {
+      window.removeEventListener(
+        'focus',
+        handleFocus
+      );
+    };
+  }, []);
+
   const displayName =
     loadingProfile
       ? 'Loading...'
@@ -88,20 +163,19 @@ export default function DashboardNavbar({
   return (
     <header className="h-16 bg-[var(--bg-surface)] border-b border-[var(--border-color)] px-4 sm:px-6 flex items-center justify-end sticky top-0 z-30 shadow-sm transition-colors duration-300">
       <div className="flex items-center gap-3 sm:gap-4">
-
         <button
           onClick={
-            !isMetaConnected
+            !metaConnected
               ? connectMeta
               : undefined
           }
           className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all ${
-            isMetaConnected
+            metaConnected
               ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30'
               : 'bg-[#3B82F6] text-white border-transparent hover:bg-[#2563EB] shadow-md shadow-[#3B82F6]/20 active:scale-[0.98]'
           }`}
         >
-          {isMetaConnected ? (
+          {metaConnected ? (
             <>
               <CheckCircle2
                 size={15}
@@ -119,7 +193,6 @@ export default function DashboardNavbar({
             </>
           )}
         </button>
-
 
         <Link
           href="/dashboard/profile"
@@ -139,7 +212,6 @@ export default function DashboardNavbar({
             </p>
           </div>
         </Link>
-
       </div>
     </header>
   );
