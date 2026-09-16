@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Toaster } from 'react-hot-toast';
 import Sidebar from '@/components/dashboard/Sidebar';
 import DashboardNavbar from '@/components/dashboard/DashboardNavbar';
 import apiClient from '@/api/client';
@@ -37,12 +38,17 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-[var(--bg-surface)] flex">
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+        }}
+      />
+
       <Sidebar userPlan={userPlan} />
 
       <div className="flex-1 flex flex-col min-w-0 md:ml-64">
-        <DashboardNavbar
-          isMetaConnected={isMetaConnected}
-        />
+        <DashboardNavbar isMetaConnected={isMetaConnected} />
 
         <main className="flex-1 p-6 md:p-8 overflow-y-auto">
           {children}

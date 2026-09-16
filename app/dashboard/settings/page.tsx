@@ -12,9 +12,13 @@ import {
   Sun,
   ExternalLink,
   Unplug,
+  Users,
+  Image,
 } from 'lucide-react';
+import { Toaster, toast } from 'react-hot-toast';
 
 import apiClient from '@/api/client';
+
 import {
   connectMeta,
   getMetaStatus,
@@ -24,10 +28,15 @@ import {
   syncMeta,
 } from '@/api/meta';
 
-type ActiveTab =
-  | 'integrations'
-  | 'preferences'
-  | 'billing';
+import {
+  getInstagramAccounts,
+  getConnectedInstagram,
+  connectInstagram,
+  syncInstagram,
+  disconnectInstagram,
+} from '@/api/instagram';
+
+type ActiveTab = 'integrations' | 'preferences' | 'billing';
 
 interface AdAccount {
   id: string;
@@ -40,6 +49,36 @@ interface AdAccount {
   enabled?: boolean;
   pixelId?: string;
   pixel?: string;
+}
+
+interface InstagramAccount {
+  id: string;
+  username?: string | null;
+  name?: string | null;
+  profile_picture_url?: string | null;
+  followers_count?: number;
+  follows_count?: number;
+  media_count?: number;
+  facebookPageId?: string | null;
+  facebookPageName?: string | null;
+}
+
+interface ConnectedInstagramAccount {
+  _id: string;
+  user: string;
+  instagramAccountId: string;
+  username: string | null;
+  name: string | null;
+  profilePictureUrl: string | null;
+  followersCount: number;
+  followsCount: number;
+  mediaCount: number;
+  facebookPageId: string | null;
+  facebookPageName: string | null;
+  isConnected: boolean;
+  lastSyncedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface SettingsData {
@@ -77,6 +116,7 @@ interface SubscriptionData {
   cancelAtPeriodEnd?: boolean;
 }
 
+const TOAST_DURATION = 5000;
 
 const extractData = (response: any) => {
   return response?.data?.data ?? response?.data ?? response;
@@ -102,6 +142,70 @@ const normalizeAccounts = (response: any): AdAccount[] => {
   }
 
   return [];
+};
+
+const normalizeInstagramAccounts = (
+  response: any
+): InstagramAccount[] => {
+  const data = extractData(response);
+
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  if (Array.isArray(data?.data)) {
+    return data.data;
+  }
+
+  if (Array.isArray(data?.accounts)) {
+    return data.accounts;
+  }
+
+  if (Array.isArray(data?.instagramAccounts)) {
+    return data.instagramAccounts;
+  }
+
+  return [];
+};
+
+const normalizeConnectedInstagram = (
+  response: any
+): ConnectedInstagramAccount | null => {
+  const data = extractData(response);
+
+  if (!data) {
+    return null;
+  }
+
+  if (Array.isArray(data)) {
+    return data[0] ?? null;
+  }
+
+  if (Array.isArray(data?.data)) {
+    return data.data[0] ?? null;
+  }
+
+  if (data?.account) {
+    return data.account;
+  }
+
+  if (data?.instagram) {
+    return data.instagram;
+  }
+
+  if (data?.connectedInstagram) {
+    return data.connectedInstagram;
+  }
+
+  if (
+    data?.instagramAccountId ||
+    data?.username ||
+    data?.profilePictureUrl
+  ) {
+    return data;
+  }
+
+  return null;
 };
 
 const getMetaConnected = (response: any): boolean => {
@@ -138,6 +242,97 @@ const getMetaAccountId = (response: any): string | null => {
   );
 };
 
+const getErrorMessage = (err: any, fallback: string) => {
+  return (
+    err?.response?.data?.message ??
+    err?.response?.data?.error ??
+    err?.message ??
+    fallback
+  );
+};
+
+const InstagramIcon = ({ size = 24 }: { size?: number }) => {
+  const innerSize = Math.round(size * 0.32);
+  const dotSize = Math.max(2, Math.round(size * 0.1));
+  const borderRadius = Math.round(size * 0.28);
+
+  return (
+    <div
+      className="relative border-2 border-white"
+      style={{
+        width: size,
+        height: size,
+        borderRadius,
+      }}
+    >
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white"
+        style={{
+          width: innerSize,
+          height: innerSize,
+        }}
+      />
+      <div
+        className="absolute rounded-full bg-white"
+        style={{
+          width: dotSize,
+          height: dotSize,
+          top: size * 0.18,
+          right: size * 0.18,
+        }}
+      />
+    </div>
+  );
+};
+
+const ToastMessage = ({
+  t,
+  message,
+}: {
+  t: any;
+  message: string;
+}) => {
+  const isError = t.type === 'error';
+
+  return (
+    <div
+      className={`relative min-w-[320px] max-w-[420px] overflow-hidden rounded-xl border px-4 py-3 shadow-xl ${
+        isError
+          ? 'border-red-500/30 bg-[var(--bg-primary)] text-red-500'
+          : 'border-emerald-500/30 bg-[var(--bg-primary)] text-emerald-500'
+      }`}
+    >
+      <div className="flex items-start gap-3 pr-1">
+        <div className="flex-1 text-sm font-medium leading-5">
+          {message}
+        </div>
+      </div>
+
+      <div className="absolute bottom-0 left-0 h-[3px] w-full overflow-hidden">
+        <div
+          className={`h-full ${
+            isError ? 'bg-red-500' : 'bg-emerald-500'
+          }`}
+          style={{
+            animation: `toastProgress ${TOAST_DURATION}ms linear forwards`,
+          }}
+        />
+      </div>
+
+      <style jsx>{`
+        @keyframes toastProgress {
+          from {
+            width: 100%;
+          }
+          to {
+            width: 0%;
+          }
+        }
+      `}</style>
+    </div>
+  );
+};
+
 export default function SettingsPage() {
   const [activeTab, setActiveTab] =
     useState<ActiveTab>('integrations');
@@ -153,29 +348,26 @@ export default function SettingsPage() {
   const [subscription, setSubscription] =
     useState<SubscriptionData | null>(null);
 
-  const [loading, setLoading] =
-    useState(true);
-
-  const [saving, setSaving] =
-    useState(false);
-
-  const [syncing, setSyncing] =
-    useState(false);
-
-  const [connecting, setConnecting] =
-    useState(false);
-
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [connecting, setConnecting] = useState(false);
   const [disconnecting, setDisconnecting] =
     useState(false);
 
   const [selectingAccount, setSelectingAccount] =
     useState<string | null>(null);
 
-  const [error, setError] =
+  const [syncingInstagram, setSyncingInstagram] =
+    useState(false);
+
+  const [connectingInstagram, setConnectingInstagram] =
     useState<string | null>(null);
 
-  const [success, setSuccess] =
-    useState<string | null>(null);
+  const [
+    disconnectingInstagram,
+    setDisconnectingInstagram,
+  ] = useState(false);
 
   const [metaConnected, setMetaConnected] =
     useState(false);
@@ -183,8 +375,23 @@ export default function SettingsPage() {
   const [metaAccounts, setMetaAccounts] =
     useState<AdAccount[]>([]);
 
-  const [selectedMetaAccountId, setSelectedMetaAccountId] =
-    useState<string | null>(null);
+  const [
+    selectedMetaAccountId,
+    setSelectedMetaAccountId,
+  ] = useState<string | null>(null);
+
+  const [instagramAccounts, setInstagramAccounts] =
+    useState<InstagramAccount[]>([]);
+
+  const [
+    connectedInstagram,
+    setConnectedInstagram,
+  ] = useState<ConnectedInstagramAccount | null>(
+    null
+  );
+
+  const [instagramLoading, setInstagramLoading] =
+    useState(false);
 
   const [frequency, setFrequency] =
     useState('hourly');
@@ -196,49 +403,48 @@ export default function SettingsPage() {
     useState<Record<string, boolean>>({});
 
   const showSuccess = (message: string) => {
-    setSuccess(message);
-    setError(null);
-
-    window.setTimeout(() => {
-      setSuccess(null);
-    }, 3000);
+    toast.custom(
+      (t) => (
+        <ToastMessage
+          t={t}
+          message={message}
+        />
+      ),
+      {
+        duration: TOAST_DURATION,
+        position: 'top-right',
+      }
+    );
   };
 
   const showError = (message: string) => {
-    setError(message);
-    setSuccess(null);
-  };
-
-  const getErrorMessage = (
-    err: any,
-    fallback: string
-  ) => {
-    return (
-      err?.response?.data?.message ??
-      err?.response?.data?.error ??
-      err?.message ??
-      fallback
+    toast.custom(
+      (t) => (
+        <ToastMessage
+          t={t}
+          message={message}
+        />
+      ),
+      {
+        duration: TOAST_DURATION,
+        position: 'top-right',
+      }
     );
   };
 
   const loadMetaData = async () => {
     try {
-      const statusResponse =
-        await getMetaStatus();
+      const statusResponse = await getMetaStatus();
 
       const connectedFromMeta =
         getMetaConnected(statusResponse);
 
-      setMetaConnected(
-        connectedFromMeta
-      );
+      setMetaConnected(connectedFromMeta);
 
       const accountId =
         getMetaAccountId(statusResponse);
 
-      setSelectedMetaAccountId(
-        accountId
-      );
+      setSelectedMetaAccountId(accountId);
 
       if (connectedFromMeta) {
         try {
@@ -246,9 +452,7 @@ export default function SettingsPage() {
             await getMetaAdAccounts();
 
           const accounts =
-            normalizeAccounts(
-              accountsResponse
-            );
+            normalizeAccounts(accountsResponse);
 
           setMetaAccounts(accounts);
 
@@ -257,21 +461,17 @@ export default function SettingsPage() {
             boolean
           > = {};
 
-          accounts.forEach(
-            (account) => {
-              accountState[account.id] =
-                account.isEnabled ??
-                account.enabled ??
-                account.id === accountId;
-            }
-          );
+          accounts.forEach((account) => {
+            accountState[account.id] =
+              account.isEnabled ??
+              account.enabled ??
+              account.id === accountId;
+          });
 
-          setEnabledAccounts(
-            (current) => ({
-              ...accountState,
-              ...current,
-            })
-          );
+          setEnabledAccounts((current) => ({
+            ...accountState,
+            ...current,
+          }));
         } catch (accountsError) {
           console.error(
             'Meta ad accounts loading error:',
@@ -280,9 +480,7 @@ export default function SettingsPage() {
         }
       } else {
         setMetaAccounts([]);
-        setSelectedMetaAccountId(
-          null
-        );
+        setSelectedMetaAccountId(null);
       }
     } catch (err) {
       console.error(
@@ -294,26 +492,60 @@ export default function SettingsPage() {
     }
   };
 
+  const loadInstagramData = async () => {
+    try {
+      setInstagramLoading(true);
+
+      const [
+        accountsResponse,
+        connectedResponse,
+      ] = await Promise.all([
+        getInstagramAccounts(),
+        getConnectedInstagram(),
+      ]);
+
+      const availableAccounts =
+        normalizeInstagramAccounts(
+          accountsResponse
+        );
+
+      const connectedAccount =
+        normalizeConnectedInstagram(
+          connectedResponse
+        );
+
+      setInstagramAccounts(
+        availableAccounts
+      );
+
+      setConnectedInstagram(
+        connectedAccount
+      );
+    } catch (err) {
+      console.error(
+        'Instagram loading error:',
+        err
+      );
+
+      setInstagramAccounts([]);
+      setConnectedInstagram(null);
+    } finally {
+      setInstagramLoading(false);
+    }
+  };
 
   const loadSettings = async () => {
     try {
       setLoading(true);
-      setError(null);
 
       const [
         settingsResponse,
         profileResponse,
         subscriptionResponse,
       ] = await Promise.allSettled([
-        apiClient.get(
-          '/dashboard/settings'
-        ),
-        apiClient.get(
-          '/dashboard/profile'
-        ),
-        apiClient.get(
-          '/subscriptions/me'
-        ),
+        apiClient.get('/dashboard/settings'),
+        apiClient.get('/dashboard/profile'),
+        apiClient.get('/subscriptions/me'),
       ]);
 
       if (
@@ -321,28 +553,20 @@ export default function SettingsPage() {
         'fulfilled'
       ) {
         const data =
-          settingsResponse.value
-            ?.data?.data ??
-          settingsResponse.value
-            ?.data;
+          settingsResponse.value?.data?.data ??
+          settingsResponse.value?.data;
 
-        setSettings(
-          data ?? null
-        );
+        setSettings(data ?? null);
 
-        const sync =
-          data?.sync;
+        const sync = data?.sync;
 
         if (sync?.frequency) {
-          setFrequency(
-            sync.frequency
-          );
+          setFrequency(sync.frequency);
         }
 
-        const parsedImportRange =
-          Number(
-            sync?.importRange
-          );
+        const parsedImportRange = Number(
+          sync?.importRange
+        );
 
         if (
           Number.isFinite(
@@ -352,16 +576,13 @@ export default function SettingsPage() {
             parsedImportRange
           )
         ) {
-          setImportRange(
-            parsedImportRange
-          );
+          setImportRange(parsedImportRange);
         } else {
           setImportRange(30);
         }
 
         const accounts =
-          data?.meta
-            ?.adAccounts ?? [];
+          data?.meta?.adAccounts ?? [];
 
         const accountState: Record<
           string,
@@ -370,26 +591,19 @@ export default function SettingsPage() {
 
         accounts.forEach(
           (account: AdAccount) => {
-            accountState[
-              account.id
-            ] =
+            accountState[account.id] =
               account.isEnabled ??
               account.enabled ??
               false;
           }
         );
 
-        setEnabledAccounts(
-          (current) => ({
-            ...accountState,
-            ...current,
-          })
-        );
+        setEnabledAccounts((current) => ({
+          ...accountState,
+          ...current,
+        }));
 
-        if (
-          data?.meta
-            ?.adAccountId
-        ) {
+        if (data?.meta?.adAccountId) {
           setSelectedMetaAccountId(
             data.meta.adAccountId
           );
@@ -403,14 +617,10 @@ export default function SettingsPage() {
         'fulfilled'
       ) {
         const data =
-          profileResponse.value
-            ?.data?.data ??
-          profileResponse.value
-            ?.data;
+          profileResponse.value?.data?.data ??
+          profileResponse.value?.data;
 
-        setProfile(
-          data ?? null
-        );
+        setProfile(data ?? null);
       }
 
       if (
@@ -418,17 +628,16 @@ export default function SettingsPage() {
         'fulfilled'
       ) {
         const data =
-          subscriptionResponse.value
-            ?.data?.data ??
-          subscriptionResponse.value
-            ?.data;
+          subscriptionResponse.value?.data?.data ??
+          subscriptionResponse.value?.data;
 
-        setSubscription(
-          data ?? null
-        );
+        setSubscription(data ?? null);
       }
 
-      await loadMetaData();
+      await Promise.all([
+        loadMetaData(),
+        loadInstagramData(),
+      ]);
     } catch (err) {
       console.error(
         'Settings loading error:',
@@ -438,7 +647,7 @@ export default function SettingsPage() {
       showError(
         getErrorMessage(
           err,
-          'Unable to load your settings. Please try again.'
+          'Unable to load your settings.'
         )
       );
     } finally {
@@ -453,8 +662,6 @@ export default function SettingsPage() {
   const handleConnectMeta = () => {
     try {
       setConnecting(true);
-      setError(null);
-
       connectMeta();
     } catch (err) {
       console.error(
@@ -476,15 +683,12 @@ export default function SettingsPage() {
   const handleDisconnectMeta = async () => {
     try {
       setDisconnecting(true);
-      setError(null);
 
       await disconnectMeta();
 
       setMetaConnected(false);
       setMetaAccounts([]);
-      setSelectedMetaAccountId(
-        null
-      );
+      setSelectedMetaAccountId(null);
 
       showSuccess(
         'Meta account disconnected successfully.'
@@ -512,46 +716,33 @@ export default function SettingsPage() {
     accountId: string
   ) => {
     try {
-      setSelectingAccount(
-        accountId
-      );
-      setError(null);
+      setSelectingAccount(accountId);
 
       await connectMetaAdAccount(
         accountId
       );
 
-      setSelectedMetaAccountId(
-        accountId
-      );
+      setSelectedMetaAccountId(accountId);
 
-      setEnabledAccounts(
-        (current) => ({
-          ...current,
-          [accountId]: true,
-        })
-      );
+      setEnabledAccounts((current) => ({
+        ...current,
+        [accountId]: true,
+      }));
 
-      const account =
-        metaAccounts.find(
-          (item) =>
-            item.id === accountId
-        );
+      const account = metaAccounts.find(
+        (item) => item.id === accountId
+      );
 
       if (account) {
-        setSettings(
-          (current) => ({
-            ...(current ?? {}),
-            meta: {
-              ...(current?.meta ?? {}),
-              adAccountId:
-                account.id,
-              adAccountName:
-                account.name,
-              connected: true,
-            },
-          })
-        );
+        setSettings((current) => ({
+          ...(current ?? {}),
+          meta: {
+            ...(current?.meta ?? {}),
+            adAccountId: account.id,
+            adAccountName: account.name,
+            connected: true,
+          },
+        }));
       }
 
       showSuccess(
@@ -572,9 +763,7 @@ export default function SettingsPage() {
         )
       );
     } finally {
-      setSelectingAccount(
-        null
-      );
+      setSelectingAccount(null);
     }
   };
 
@@ -582,24 +771,18 @@ export default function SettingsPage() {
     accountId: string
   ) => {
     const nextValue =
-      !enabledAccounts[
-        accountId
-      ];
+      !enabledAccounts[accountId];
 
-    setEnabledAccounts(
-      (current) => ({
-        ...current,
-        [accountId]:
-          nextValue,
-      })
-    );
+    setEnabledAccounts((current) => ({
+      ...current,
+      [accountId]: nextValue,
+    }));
 
     try {
       await apiClient.patch(
         `/dashboard/settings/ad-accounts/${accountId}`,
         {
-          enabled:
-            nextValue,
+          enabled: nextValue,
         }
       );
 
@@ -616,13 +799,10 @@ export default function SettingsPage() {
         err
       );
 
-      setEnabledAccounts(
-        (current) => ({
-          ...current,
-          [accountId]:
-            !nextValue,
-        })
-      );
+      setEnabledAccounts((current) => ({
+        ...current,
+        [accountId]: !nextValue,
+      }));
 
       showError(
         getErrorMessage(
@@ -634,7 +814,7 @@ export default function SettingsPage() {
   };
 
   const handleSync = async () => {
-    if (!connected) {
+    if (!metaConnected) {
       showError(
         'Connect your Meta account before synchronizing data.'
       );
@@ -650,10 +830,8 @@ export default function SettingsPage() {
 
     try {
       setSyncing(true);
-      setError(null);
 
       await syncMeta();
-
       await loadSettings();
 
       showSuccess(
@@ -676,53 +854,151 @@ export default function SettingsPage() {
     }
   };
 
-  const saveSyncSettings =
+  const handleConnectInstagram = async (
+    account: InstagramAccount
+  ) => {
+    try {
+      setConnectingInstagram(account.id);
+
+      await connectInstagram(
+        account.id,
+        account.facebookPageId,
+        account.facebookPageName
+      );
+
+      showSuccess(
+        `Instagram @${
+          account.username ??
+          account.name ??
+          'account'
+        } connected successfully.`
+      );
+
+      await loadInstagramData();
+    } catch (err) {
+      console.error(
+        'Instagram connection error:',
+        err
+      );
+
+      showError(
+        getErrorMessage(
+          err,
+          'Unable to connect Instagram account.'
+        )
+      );
+    } finally {
+      setConnectingInstagram(null);
+    }
+  };
+
+  const handleSyncInstagram = async () => {
+    if (!connectedInstagram) {
+      showError(
+        'Connect an Instagram account before synchronizing.'
+      );
+      return;
+    }
+
+    try {
+      setSyncingInstagram(true);
+
+      await syncInstagram();
+      await loadInstagramData();
+
+      showSuccess(
+        'Instagram data synchronized successfully.'
+      );
+    } catch (err) {
+      console.error(
+        'Instagram synchronization error:',
+        err
+      );
+
+      showError(
+        getErrorMessage(
+          err,
+          'Unable to synchronize Instagram data.'
+        )
+      );
+    } finally {
+      setSyncingInstagram(false);
+    }
+  };
+
+  const handleDisconnectInstagram =
     async () => {
       try {
-        setSaving(true);
-        setError(null);
+        setDisconnectingInstagram(true);
 
-        const safeImportRange =
-          [30, 90, 365].includes(
-            importRange
-          )
-            ? importRange
-            : 30;
+        await disconnectInstagram();
 
-        setImportRange(
-          safeImportRange
-        );
-
-        await apiClient.put(
-          '/dashboard/settings/sync',
-          {
-            frequency,
-            importRange:
-              safeImportRange,
-          }
-        );
-
-        await loadSettings();
+        setConnectedInstagram(null);
 
         showSuccess(
-          'Sync preferences saved successfully.'
+          'Instagram account disconnected successfully.'
         );
+
+        await loadInstagramData();
       } catch (err) {
         console.error(
-          'Sync settings update error:',
+          'Instagram disconnect error:',
           err
         );
 
         showError(
           getErrorMessage(
             err,
-            'Unable to save sync preferences.'
+            'Unable to disconnect Instagram.'
           )
         );
       } finally {
-        setSaving(false);
+        setDisconnectingInstagram(false);
       }
     };
+
+  const saveSyncSettings = async () => {
+    try {
+      setSaving(true);
+
+      const safeImportRange =
+        [30, 90, 365].includes(
+          importRange
+        )
+          ? importRange
+          : 30;
+
+      setImportRange(safeImportRange);
+
+      await apiClient.put(
+        '/dashboard/settings/sync',
+        {
+          frequency,
+          importRange: safeImportRange,
+        }
+      );
+
+      await loadSettings();
+
+      showSuccess(
+        'Sync preferences saved successfully.'
+      );
+    } catch (err) {
+      console.error(
+        'Sync settings update error:',
+        err
+      );
+
+      showError(
+        getErrorMessage(
+          err,
+          'Unable to save sync preferences.'
+        )
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const formatDate = (
     value?: string | null
@@ -731,14 +1007,9 @@ export default function SettingsPage() {
       return 'Not available';
     }
 
-    const date =
-      new Date(value);
+    const date = new Date(value);
 
-    if (
-      Number.isNaN(
-        date.getTime()
-      )
-    ) {
+    if (Number.isNaN(date.getTime())) {
       return 'Not available';
     }
 
@@ -752,78 +1023,60 @@ export default function SettingsPage() {
     );
   };
 
-  const getTokenStatus =
-    () => {
-      const expiresAt =
-        settings?.meta
-          ?.tokenExpiresAt;
+  const getTokenStatus = () => {
+    const expiresAt =
+      settings?.meta?.tokenExpiresAt;
 
-      if (!expiresAt) {
-        return {
-          text: 'Expiration date unavailable',
-          valid: true,
-        };
-      }
-
-      const expiry =
-        new Date(expiresAt);
-
-      if (
-        Number.isNaN(
-          expiry.getTime()
-        )
-      ) {
-        return {
-          text: 'Expiration date unavailable',
-          valid: true,
-        };
-      }
-
-      const difference =
-        expiry.getTime() -
-        Date.now();
-
-      if (difference <= 0) {
-        return {
-          text: 'Expired',
-          valid: false,
-        };
-      }
-
-      const days =
-        Math.ceil(
-          difference /
-          (1000 *
-            60 *
-            60 *
-            24)
-        );
-
+    if (!expiresAt) {
       return {
-        text: `Active · Expires in ${days} day${
-          days === 1
-            ? ''
-            : 's'
-        }`,
+        text: 'Expiration date unavailable',
         valid: true,
       };
-    };
+    }
 
-  const tokenStatus =
-    getTokenStatus();
+    const expiry = new Date(expiresAt);
+
+    if (Number.isNaN(expiry.getTime())) {
+      return {
+        text: 'Expiration date unavailable',
+        valid: true,
+      };
+    }
+
+    const difference =
+      expiry.getTime() - Date.now();
+
+    if (difference <= 0) {
+      return {
+        text: 'Expired',
+        valid: false,
+      };
+    }
+
+    const days = Math.ceil(
+      difference /
+        (1000 * 60 * 60 * 24)
+    );
+
+    return {
+      text: `Active · Expires in ${days} day${
+        days === 1 ? '' : 's'
+      }`,
+      valid: true,
+    };
+  };
+
+  const tokenStatus = getTokenStatus();
 
   const accounts =
     metaAccounts.length > 0
       ? metaAccounts
-      : settings?.meta
-          ?.adAccounts ?? [];
+      : settings?.meta?.adAccounts ?? [];
 
   const connected =
     metaConnected ||
-    profile?.isMetaConnected ===
-      true ||
-    settings?.meta
-      ?.connected === true;
+    profile?.isMetaConnected === true ||
+    settings?.meta?.connected === true;
 
   const selectedAccount =
     accounts.find(
@@ -834,8 +1087,7 @@ export default function SettingsPage() {
     accounts.find(
       (account) =>
         account.id ===
-        settings?.meta
-          ?.adAccountId
+        settings?.meta?.adAccountId
     );
 
   const plan =
@@ -848,270 +1100,248 @@ export default function SettingsPage() {
     subscription?.currentPeriodEnd ??
     null;
 
+  const instagramConnected =
+    connectedInstagram?.isConnected ===
+    true;
+
   if (loading) {
     return (
-      <div className="min-h-screen text-[var(--text-primary)] p-6 md:p-10">
-        <div className="max-w-6xl mx-auto flex min-h-[400px] items-center justify-center">
-          <p className="text-sm text-[var(--text-secondary)]">
-            Loading settings...
-          </p>
+      <>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: TOAST_DURATION,
+          }}
+        />
+
+        <div className="min-h-screen p-6 text-[var(--text-primary)] md:p-10">
+          <div className="mx-auto flex min-h-[400px] max-w-6xl items-center justify-center">
+            <p className="text-sm text-[var(--text-secondary)]">
+              Loading settings...
+            </p>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen text-[var(--text-primary)] p-6 md:p-10 transition-colors duration-300">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: TOAST_DURATION,
+        }}
+      />
 
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Settings
-          </h1>
+      <div className="min-h-screen p-6 text-[var(--text-primary)] transition-colors duration-300 md:p-10">
+        <div className="mx-auto max-w-6xl space-y-8">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Settings
+            </h1>
 
-          <p className="text-[var(--text-secondary)] mt-1">
-            Manage your Meta API connections, preferences,
-            alerts, and subscription details.
-          </p>
-        </div>
-
-        {error && (
-          <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-500">
-            {error}
+            <p className="mt-1 text-[var(--text-secondary)]">
+              Manage your Meta and Instagram
+              connections, preferences, and
+              subscription details.
+            </p>
           </div>
-        )}
 
-        {success && (
-          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-500">
-            {success}
+          <div className="flex space-x-1 overflow-x-auto border-b border-[var(--border-color)] scrollbar-none">
+            <button
+              onClick={() =>
+                setActiveTab('integrations')
+              }
+              className={`flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+                activeTab === 'integrations'
+                  ? 'border-[var(--primary)] text-[var(--primary)]'
+                  : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              <Link2 className="h-4 w-4" />
+              Connections
+            </button>
+
+            <button
+              onClick={() =>
+                setActiveTab('preferences')
+              }
+              className={`flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+                activeTab === 'preferences'
+                  ? 'border-[var(--primary)] text-[var(--primary)]'
+                  : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              <Sliders className="h-4 w-4" />
+              Preferences
+            </button>
+
+            <button
+              onClick={() =>
+                setActiveTab('billing')
+              }
+              className={`flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+                activeTab === 'billing'
+                  ? 'border-[var(--primary)] text-[var(--primary)]'
+                  : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              <CreditCard className="h-4 w-4" />
+              Billing & Usage
+            </button>
           </div>
-        )}
 
-        <div className="flex space-x-1 border-b border-[var(--border-color)] overflow-x-auto scrollbar-none">
-
-          <button
-            onClick={() =>
-              setActiveTab(
-                'integrations'
-              )
-            }
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
-              activeTab ===
-              'integrations'
-                ? 'border-[var(--primary)] text-[var(--primary)]'
-                : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-            }`}
-          >
-            <Link2 className="w-4 h-4" />
-            Meta Connections
-          </button>
-
-          <button
-            onClick={() =>
-              setActiveTab(
-                'preferences'
-              )
-            }
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
-              activeTab ===
-              'preferences'
-                ? 'border-[var(--primary)] text-[var(--primary)]'
-                : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-            }`}
-          >
-            <Sliders className="w-4 h-4" />
-            Preferences
-          </button>
-
-          <button
-            onClick={() =>
-              setActiveTab(
-                'billing'
-              )
-            }
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
-              activeTab === 'billing'
-                ? 'border-[var(--primary)] text-[var(--primary)]'
-                : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-            }`}
-          >
-            <CreditCard className="w-4 h-4" />
-            Billing & Usage
-          </button>
-
-        </div>
-
-        <div className="space-y-6">
-
-          {activeTab === 'integrations' && (
-            <div className="space-y-6">
-
-              <div className="border border-[var(--border-color)] rounded-xl p-6 space-y-4">
-
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-
-                  <div className="flex items-center gap-4">
-
-                    <div className="w-12 h-12 rounded-xl bg-[var(--social-facebook)] text-white flex items-center justify-center font-bold text-xl">
-                      f
-                    </div>
-
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-
-                        <h3 className="font-semibold text-lg">
-                          Meta Business Account
-                        </h3>
-
-                        <span
-                          className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full ${
-                            connected
-                              ? 'bg-[var(--accent-teal)]/10 text-[var(--accent-teal)]'
-                              : 'bg-red-500/10 text-red-500'
-                          }`}
-                        >
-                          <CheckCircle2 className="w-3 h-3" />
-
-                          {connected
-                            ? 'Connected'
-                            : 'Not Connected'}
-                        </span>
-
+          <div className="space-y-6">
+            {activeTab === 'integrations' && (
+              <div className="space-y-6">
+                <div className="space-y-4 rounded-xl border border-[var(--border-color)] p-6">
+                  <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--social-facebook)] text-xl font-bold text-white">
+                        f
                       </div>
 
-                      <p className="text-sm text-[var(--text-secondary)]">
-                        {connected
-                          ? selectedAccount?.name ??
-                            settings?.meta
-                              ?.adAccountName ??
-                            'Meta account connected'
-                          : 'Connect your Meta Business account to synchronize advertising data.'}
-                      </p>
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-lg font-semibold">
+                            Meta Business Account
+                          </h3>
 
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                              connected
+                                ? 'bg-[var(--accent-teal)]/10 text-[var(--accent-teal)]'
+                                : 'bg-red-500/10 text-red-500'
+                            }`}
+                          >
+                            <CheckCircle2 className="h-3 w-3" />
+                            {connected
+                              ? 'Connected'
+                              : 'Not Connected'}
+                          </span>
+                        </div>
+
+                        <p className="text-sm text-[var(--text-secondary)]">
+                          {connected
+                            ? selectedAccount?.name ??
+                              settings?.meta
+                                ?.adAccountName ??
+                              'Meta account connected'
+                            : 'Connect your Meta Business account to synchronize advertising data.'}
+                        </p>
+                      </div>
                     </div>
 
+                    <div className="flex items-center gap-2">
+                      {connected ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={handleSync}
+                            disabled={
+                              syncing ||
+                              !selectedMetaAccountId
+                            }
+                            className="inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-accent)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <RefreshCw
+                              className={`h-4 w-4 ${
+                                syncing
+                                  ? 'animate-spin'
+                                  : ''
+                              }`}
+                            />
+                            {syncing
+                              ? 'Syncing...'
+                              : 'Sync Data'}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={
+                              handleDisconnectMeta
+                            }
+                            disabled={
+                              disconnecting
+                            }
+                            className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-500/30 px-4 py-2 text-sm font-medium text-red-500 transition-colors hover:bg-red-500/10 disabled:opacity-50"
+                          >
+                            <Unplug className="h-4 w-4" />
+                            {disconnecting
+                              ? 'Disconnecting...'
+                              : 'Disconnect'}
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={
+                            handleConnectMeta
+                          }
+                          disabled={connecting}
+                          className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--primary)] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--primary-hover)] disabled:opacity-50"
+                        >
+                          <Link2 className="h-4 w-4" />
+                          {connecting
+                            ? 'Connecting...'
+                            : 'Connect Meta'}
+                        </button>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between gap-4 rounded-lg bg-[var(--bg-accent)] p-3 text-xs text-[var(--text-secondary)]">
+                    <span>
+                      Meta Access Token:{' '}
+                      <strong>
+                        {connected
+                          ? tokenStatus.text
+                          : 'Not connected'}
+                      </strong>
+                    </span>
 
-                    {connected ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={
-                            handleSync
-                          }
-                          disabled={
-                            syncing ||
-                            !selectedMetaAccountId
-                          }
-                          className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-[var(--bg-accent)] text-[var(--text-primary)] hover:opacity-90 transition-opacity border border-[var(--border-color)] disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <RefreshCw
-                            className={`w-4 h-4 ${
-                              syncing
-                                ? 'animate-spin'
-                                : ''
-                            }`}
-                          />
-
-                          {syncing
-                            ? 'Syncing...'
-                            : 'Sync Data'}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={
-                            handleDisconnectMeta
-                          }
-                          disabled={
-                            disconnecting
-                          }
-                          className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-red-500/30 text-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-50"
-                        >
-                          <Unplug className="w-4 h-4" />
-
-                          {disconnecting
-                            ? 'Disconnecting...'
-                            : 'Disconnect'}
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={
-                          handleConnectMeta
-                        }
-                        disabled={
-                          connecting
-                        }
-                        className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors disabled:opacity-50"
+                    {connected && (
+                      <a
+                        href="https://business.facebook.com/"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-1 text-[var(--primary)] hover:underline"
                       >
-                        <Link2 className="w-4 h-4" />
-
-                        {connecting
-                          ? 'Connecting...'
-                          : 'Connect Meta'}
-                      </button>
+                        Meta Portal
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
                     )}
-
                   </div>
-
                 </div>
 
-                <div className="text-xs text-[var(--text-secondary)] bg-[var(--bg-accent)] p-3 rounded-lg flex items-center justify-between gap-4">
+                <div className="space-y-4 rounded-xl border border-[var(--border-color)] p-6">
+                  <div>
+                    <h3 className="text-lg font-semibold">
+                      Active Ad Accounts
+                    </h3>
 
-                  <span>
-                    Meta Access Token:{' '}
-                    <strong>
-                      {connected
-                        ? tokenStatus.text
-                        : 'Not connected'}
-                    </strong>
-                  </span>
-
-                  {connected && (
-                    <a
-                      href="https://business.facebook.com/"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-[var(--primary)] hover:underline flex items-center gap-1"
-                    >
-                      Meta Portal
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  )}
-
-                </div>
-
-              </div>
-
-              <div className="border border-[var(--border-color)] rounded-xl p-6 space-y-4">
-
-                <div>
-                  <h3 className="font-semibold text-lg">
-                    Active Ad Accounts
-                  </h3>
-
-                  <p className="text-sm text-[var(--text-secondary)]">
-                    Connect a Meta ad account and choose which accounts should synchronize with your dashboard.
-                  </p>
-                </div>
-
-                {!connected ? (
-                  <div className="border border-[var(--border-color)] rounded-lg p-5 text-sm text-[var(--text-secondary)]">
-                    Connect your Meta account first to load your available ad accounts.
+                    <p className="text-sm text-[var(--text-secondary)]">
+                      Connect a Meta ad account and
+                      choose which accounts should
+                      synchronize with your dashboard.
+                    </p>
                   </div>
-                ) : accounts.length === 0 ? (
-                  <div className="border border-[var(--border-color)] rounded-lg p-5 text-sm text-[var(--text-secondary)]">
-                    No Meta ad accounts are available for this account.
-                  </div>
-                ) : (
-                  <div className="divide-y divide-[var(--border-color)] border border-[var(--border-color)] rounded-lg overflow-hidden">
 
-                    {accounts.map(
-                      (account) => {
+                  {!connected ? (
+                    <div className="rounded-lg border border-[var(--border-color)] p-5 text-sm text-[var(--text-secondary)]">
+                      Connect your Meta account first
+                      to load your available ad
+                      accounts.
+                    </div>
+                  ) : accounts.length === 0 ? (
+                    <div className="rounded-lg border border-[var(--border-color)] p-5 text-sm text-[var(--text-secondary)]">
+                      No Meta ad accounts are
+                      available for this account.
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-[var(--border-color)] overflow-hidden rounded-lg border border-[var(--border-color)]">
+                      {accounts.map((account) => {
                         const enabled =
                           enabledAccounts[
                             account.id
@@ -1127,49 +1357,33 @@ export default function SettingsPage() {
 
                         return (
                           <div
-                            key={
-                              account.id
-                            }
-                            className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-[var(--bg-accent)] transition-colors"
+                            key={account.id}
+                            className="flex flex-col justify-between gap-4 p-4 transition-colors hover:bg-[var(--bg-accent)] sm:flex-row sm:items-center"
                           >
-
                             <div className="flex items-center gap-3">
-
                               <input
                                 type="checkbox"
-                                checked={
-                                  enabled
-                                }
+                                checked={enabled}
                                 onChange={() =>
                                   toggleAdAccount(
                                     account.id
                                   )
                                 }
-                                disabled={
-                                  !connected
-                                }
-                                className="w-4 h-4 rounded border-[var(--border-color)] text-[var(--primary)] focus:ring-[var(--primary)]"
+                                disabled={!connected}
+                                className="h-4 w-4 rounded border-[var(--border-color)] text-[var(--primary)] focus:ring-[var(--primary)]"
                               />
 
                               <div>
                                 <p className="text-sm font-medium">
-                                  {
-                                    account.name
-                                  }
+                                  {account.name}
                                 </p>
 
                                 <p className="text-xs text-[var(--text-secondary)]">
-                                  ID:{' '}
-                                  {
-                                    accountId
-                                  }
-
+                                  ID: {accountId}
                                   {account.currency &&
                                     ` • ${account.currency}`}
-
                                   {account.timezone_name &&
                                     ` • ${account.timezone_name}`}
-
                                   {(account.pixelId ??
                                     account.pixel) &&
                                     ` • Pixel: ${
@@ -1178,19 +1392,17 @@ export default function SettingsPage() {
                                     }`}
                                 </p>
                               </div>
-
                             </div>
 
                             <div className="flex items-center gap-2">
-
                               {selected && (
-                                <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-[var(--accent-teal)]/10 text-[var(--accent-teal)]">
+                                <span className="rounded-full bg-[var(--accent-teal)]/10 px-2.5 py-1 text-xs font-medium text-[var(--accent-teal)]">
                                   Connected
                                 </span>
                               )}
 
                               <span
-                                className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+                                className={`rounded-full px-2.5 py-1 text-xs font-medium ${
                                   enabled
                                     ? 'bg-[var(--accent-teal)]/10 text-[var(--accent-teal)]'
                                     : 'bg-[var(--bg-accent)] text-[var(--text-secondary)]'
@@ -1213,252 +1425,562 @@ export default function SettingsPage() {
                                     selectingAccount !==
                                     null
                                   }
-                                  className="px-3 py-1.5 text-xs font-medium rounded-lg bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors disabled:opacity-50"
+                                  className="rounded-lg bg-[var(--primary)] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[var(--primary-hover)] disabled:opacity-50"
                                 >
                                   {selectingAccount ===
-                                    account.id
+                                  account.id
                                     ? 'Connecting...'
                                     : 'Connect'}
                                 </button>
                               )}
-
                             </div>
-
                           </div>
                         );
-                      }
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-5 rounded-xl border border-[var(--border-color)] p-6">
+                  <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 text-white">
+                        <InstagramIcon size={24} />
+                      </div>
+
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-lg font-semibold">
+                            Instagram Account
+                          </h3>
+
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                              instagramConnected
+                                ? 'bg-[var(--accent-teal)]/10 text-[var(--accent-teal)]'
+                                : 'bg-red-500/10 text-red-500'
+                            }`}
+                          >
+                            <CheckCircle2 className="h-3 w-3" />
+                            {instagramConnected
+                              ? 'Connected'
+                              : 'Not Connected'}
+                          </span>
+                        </div>
+
+                        <p className="text-sm text-[var(--text-secondary)]">
+                          {instagramConnected
+                            ? `@${
+                                connectedInstagram?.username ??
+                                connectedInstagram?.name ??
+                                'Instagram account'
+                              }`
+                            : 'Connect an Instagram account associated with your Meta setup.'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {instagramConnected && (
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={
+                            handleSyncInstagram
+                          }
+                          disabled={
+                            syncingInstagram
+                          }
+                          className="inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-accent)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition-opacity hover:opacity-90 disabled:opacity-50"
+                        >
+                          <RefreshCw
+                            className={`h-4 w-4 ${
+                              syncingInstagram
+                                ? 'animate-spin'
+                                : ''
+                            }`}
+                          />
+                          {syncingInstagram
+                            ? 'Syncing...'
+                            : 'Sync Instagram'}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={
+                            handleDisconnectInstagram
+                          }
+                          disabled={
+                            disconnectingInstagram
+                          }
+                          className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-500/30 px-4 py-2 text-sm font-medium text-red-500 transition-colors hover:bg-red-500/10 disabled:opacity-50"
+                        >
+                          <Unplug className="h-4 w-4" />
+                          {disconnectingInstagram
+                            ? 'Disconnecting...'
+                            : 'Disconnect'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {instagramConnected &&
+                    connectedInstagram && (
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                        <div className="rounded-lg bg-[var(--bg-accent)] p-4">
+                          <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+                            <Users className="h-4 w-4" />
+                            Followers
+                          </div>
+
+                          <p className="mt-1 text-lg font-semibold">
+                            {(
+                              connectedInstagram.followersCount ??
+                              0
+                            ).toLocaleString()}
+                          </p>
+                        </div>
+
+                        <div className="rounded-lg bg-[var(--bg-accent)] p-4">
+                          <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+                            <Users className="h-4 w-4" />
+                            Following
+                          </div>
+
+                          <p className="mt-1 text-lg font-semibold">
+                            {(
+                              connectedInstagram.followsCount ??
+                              0
+                            ).toLocaleString()}
+                          </p>
+                        </div>
+
+                        <div className="rounded-lg bg-[var(--bg-accent)] p-4">
+                          <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+                            <Image className="h-4 w-4" />
+                            Posts
+                          </div>
+
+                          <p className="mt-1 text-lg font-semibold">
+                            {(
+                              connectedInstagram.mediaCount ??
+                              0
+                            ).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
                     )}
 
-                  </div>
-                )}
+                  {instagramConnected &&
+                    connectedInstagram?.facebookPageName && (
+                      <div className="rounded-lg bg-[var(--bg-accent)] p-3 text-xs text-[var(--text-secondary)]">
+                        Connected through Facebook
+                        Page:{' '}
+                        <strong>
+                          {
+                            connectedInstagram.facebookPageName
+                          }
+                        </strong>
+                      </div>
+                    )}
 
-              </div>
+                  {instagramConnected &&
+                    connectedInstagram?.lastSyncedAt && (
+                      <p className="text-xs text-[var(--text-secondary)]">
+                        Last synchronized:{' '}
+                        {formatDate(
+                          connectedInstagram.lastSyncedAt
+                        )}
+                      </p>
+                    )}
 
-            </div>
-          )}
+                  {!instagramConnected && (
+                    <div className="space-y-3">
+                      {instagramLoading ? (
+                        <div className="rounded-lg border border-[var(--border-color)] p-5 text-sm text-[var(--text-secondary)]">
+                          Loading Instagram
+                          accounts...
+                        </div>
+                      ) : instagramAccounts.length ===
+                        0 ? (
+                        <div className="rounded-lg border border-[var(--border-color)] p-5 text-sm text-[var(--text-secondary)]">
+                          No Instagram accounts
+                          are available. Make sure
+                          your Instagram professional
+                          account is connected to an
+                          eligible Facebook Page and
+                          that the required Meta
+                          permissions are configured.
+                        </div>
+                      ) : (
+                        <div className="divide-y divide-[var(--border-color)] overflow-hidden rounded-lg border border-[var(--border-color)]">
+                          {instagramAccounts.map(
+                            (account) => (
+                              <div
+                                key={account.id}
+                                className="flex flex-col justify-between gap-4 p-4 transition-colors hover:bg-[var(--bg-accent)] sm:flex-row sm:items-center"
+                              >
+                                <div className="flex items-center gap-3">
+                                  {account.profile_picture_url ? (
+                                    <img
+                                      src={
+                                        account.profile_picture_url
+                                      }
+                                      alt={
+                                        account.username ??
+                                        'Instagram'
+                                      }
+                                      className="h-11 w-11 rounded-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 text-white">
+                                      <InstagramIcon size={20} />
+                                    </div>
+                                  )}
 
-          {activeTab === 'preferences' && (
-            <div className="border border-[var(--border-color)] rounded-xl p-6 space-y-6">
+                                  <div>
+                                    <p className="text-sm font-medium">
+                                      {account.username
+                                        ? `@${account.username}`
+                                        : account.name ??
+                                          'Instagram Account'}
+                                    </p>
 
-              <div>
-                <h3 className="font-semibold text-lg">
-                  Appearance
-                </h3>
+                                    <p className="text-xs text-[var(--text-secondary)]">
+                                      {account.name &&
+                                      account.username
+                                        ? account.name
+                                        : ''}
 
-                <p className="text-sm text-[var(--text-secondary)]">
-                  Choose how Ad Pilot looks on your device.
-                </p>
-              </div>
+                                      {account.facebookPageName &&
+                                        ` • Page: ${account.facebookPageName}`}
+                                    </p>
 
-              <div className="space-y-3">
+                                    <p className="mt-1 text-xs text-[var(--text-secondary)]">
+                                      {(
+                                        account.followers_count ??
+                                        0
+                                      ).toLocaleString()}{' '}
+                                      followers
+                                      {' • '}
+                                      {(
+                                        account.media_count ??
+                                        0
+                                      ).toLocaleString()}{' '}
+                                      posts
+                                    </p>
+                                  </div>
+                                </div>
 
-                <label className="text-sm font-medium">
-                  Theme
-                </label>
-
-                <div className="flex gap-3 max-w-sm">
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setTheme(
-                        'light'
-                      )
-                    }
-                    className={`flex-1 p-3 rounded-lg border flex items-center justify-center gap-2 text-sm font-medium transition-colors ${
-                      theme ===
-                      'light'
-                        ? 'border-[var(--primary)] bg-[var(--bg-accent)] text-[var(--primary)]'
-                        : 'border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-                    }`}
-                  >
-                    <Sun className="w-4 h-4" />
-                    Light
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setTheme(
-                        'dark'
-                      )
-                    }
-                    className={`flex-1 p-3 rounded-lg border flex items-center justify-center gap-2 text-sm font-medium transition-colors ${
-                      theme ===
-                      'dark'
-                        ? 'border-[var(--primary)] bg-[var(--bg-accent)] text-[var(--primary)]'
-                        : 'border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-                    }`}
-                  >
-                    <Moon className="w-4 h-4" />
-                    Dark
-                  </button>
-
-                </div>
-
-              </div>
-
-            </div>
-          )}
-
-          {activeTab === 'billing' && (
-            <div className="space-y-6">
-
-              <div className="border border-[var(--border-color)] rounded-xl p-6 space-y-6">
-
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-
-                  <div>
-
-                    <span className="text-xs uppercase tracking-wider text-[var(--accent-teal)] font-bold">
-                      Current Plan
-                    </span>
-
-                    <h3 className="text-2xl font-bold mt-1">
-                      {plan === 'PRO'
-                        ? 'Pro Analytics Plan'
-                        : 'Free Plan'}
-                    </h3>
-
-                    <p className="text-sm text-[var(--text-secondary)]">
-                      {plan === 'PRO'
-                        ? planEndsAt
-                          ? `Plan active until ${formatDate(
-                              planEndsAt
-                            )}`
-                          : 'Active Pro subscription'
-                        : 'Upgrade to Pro to unlock premium features.'}
-                    </p>
-
-                  </div>
-
-                  {plan === 'FREE' && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        window.location.href =
-                          '/pricing'
-                      }
-                      className="px-4 py-2 text-sm font-medium text-white bg-[var(--primary)] hover:bg-[var(--primary-hover)] rounded-lg transition-colors"
-                    >
-                      Upgrade Plan
-                    </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleConnectInstagram(
+                                      account
+                                    )
+                                  }
+                                  disabled={
+                                    connectingInstagram !==
+                                    null
+                                  }
+                                  className="rounded-lg bg-[var(--primary)] px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-[var(--primary-hover)] disabled:opacity-50"
+                                >
+                                  {connectingInstagram ===
+                                  account.id
+                                    ? 'Connecting...'
+                                    : 'Connect'}
+                                </button>
+                              </div>
+                            )
+                          )}
+                        </div>
+                      )}
+                    </div>
                   )}
-
                 </div>
-
-                <div className="pt-4 border-t border-[var(--border-color)]">
-
-                  <div className="flex justify-between text-sm">
-
-                    <span>
-                      Subscription Status
-                    </span>
-
-                    <span className="font-medium">
-                      {subscription?.status ??
-                        (plan === 'PRO'
-                          ? 'Active'
-                          : 'Free')}
-                    </span>
-
-                  </div>
-
-                  {subscription?.cancelAtPeriodEnd && (
-                    <p className="text-xs text-amber-500 mt-2">
-                      Your subscription is scheduled to end at the end of the current billing period.
-                    </p>
-                  )}
-
-                </div>
-
               </div>
+            )}
 
-              <div className="border border-[var(--border-color)] rounded-xl p-6 space-y-4">
-
+            {activeTab === 'preferences' && (
+              <div className="space-y-6 rounded-xl border border-[var(--border-color)] p-6">
                 <div>
-
-                  <h3 className="font-semibold text-lg">
-                    Account & Subscription
+                  <h3 className="text-lg font-semibold">
+                    Appearance
                   </h3>
 
                   <p className="text-sm text-[var(--text-secondary)]">
-                    Subscription information currently available from your account.
+                    Choose how Ad Pilot looks on
+                    your device.
                   </p>
-
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  <label className="text-sm font-medium">
+                    Theme
+                  </label>
 
-                  <div className="rounded-lg bg-[var(--bg-accent)] p-4">
+                  <div className="flex max-w-sm gap-3">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setTheme('light')
+                      }
+                      className={`flex flex-1 items-center justify-center gap-2 rounded-lg border p-3 text-sm font-medium transition-colors ${
+                        theme === 'light'
+                          ? 'border-[var(--primary)] bg-[var(--bg-accent)] text-[var(--primary)]'
+                          : 'border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                      }`}
+                    >
+                      <Sun className="h-4 w-4" />
+                      Light
+                    </button>
 
-                    <p className="text-xs text-[var(--text-secondary)]">
-                      Account
-                    </p>
-
-                    <p className="font-medium mt-1">
-                      {profile?.email ??
-                        'Not available'}
-                    </p>
-
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setTheme('dark')
+                      }
+                      className={`flex flex-1 items-center justify-center gap-2 rounded-lg border p-3 text-sm font-medium transition-colors ${
+                        theme === 'dark'
+                          ? 'border-[var(--primary)] bg-[var(--bg-accent)] text-[var(--primary)]'
+                          : 'border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                      }`}
+                    >
+                      <Moon className="h-4 w-4" />
+                      Dark
+                    </button>
                   </div>
-
-                  <div className="rounded-lg bg-[var(--bg-accent)] p-4">
-
-                    <p className="text-xs text-[var(--text-secondary)]">
-                      Current Plan
-                    </p>
-
-                    <p className="font-medium mt-1">
-                      {plan}
-                    </p>
-
-                  </div>
-
-                  <div className="rounded-lg bg-[var(--bg-accent)] p-4">
-
-                    <p className="text-xs text-[var(--text-secondary)]">
-                      Plan End Date
-                    </p>
-
-                    <p className="font-medium mt-1">
-                      {formatDate(
-                        planEndsAt
-                      )}
-                    </p>
-
-                  </div>
-
-                  <div className="rounded-lg bg-[var(--bg-accent)] p-4">
-
-                    <p className="text-xs text-[var(--text-secondary)]">
-                      Meta Ad Accounts
-                    </p>
-
-                    <p className="font-medium mt-1">
-                      {
-                        accounts.filter(
-                          (account) =>
-                            enabledAccounts[
-                              account.id
-                            ]
-                        ).length
-                      }{' '}
-                      enabled
-                    </p>
-
-                  </div>
-
                 </div>
 
+                <div className="space-y-5 border-t border-[var(--border-color)] pt-6">
+                  <div>
+                    <h3 className="text-lg font-semibold">
+                      Data Synchronization
+                    </h3>
+
+                    <p className="text-sm text-[var(--text-secondary)]">
+                      Configure how frequently
+                      Meta data is synchronized.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="text-sm font-medium">
+                        Sync Frequency
+                      </label>
+
+                      <select
+                        value={frequency}
+                        onChange={(event) =>
+                          setFrequency(
+                            event.target.value
+                          )
+                        }
+                        className="mt-2 w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] px-3 py-2 text-sm outline-none"
+                      >
+                        <option value="hourly">
+                          Hourly
+                        </option>
+                        <option value="daily">
+                          Daily
+                        </option>
+                        <option value="weekly">
+                          Weekly
+                        </option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium">
+                        Import Range
+                      </label>
+
+                      <select
+                        value={importRange}
+                        onChange={(event) =>
+                          setImportRange(
+                            Number(
+                              event.target.value
+                            )
+                          )
+                        }
+                        className="mt-2 w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] px-3 py-2 text-sm outline-none"
+                      >
+                        <option value={30}>
+                          Last 30 days
+                        </option>
+                        <option value={90}>
+                          Last 90 days
+                        </option>
+                        <option value={365}>
+                          Last 365 days
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={saveSyncSettings}
+                    disabled={saving}
+                    className="rounded-lg bg-[var(--primary)] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--primary-hover)] disabled:opacity-50"
+                  >
+                    {saving
+                      ? 'Saving...'
+                      : 'Save Preferences'}
+                  </button>
+                </div>
               </div>
+            )}
 
-            </div>
-          )}
+            {activeTab === 'billing' && (
+              <div className="space-y-6">
+                <div className="space-y-6 rounded-xl border border-[var(--border-color)] p-6">
+                  <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+                    <div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-[var(--accent-teal)]">
+                        Current Plan
+                      </span>
 
+                      <h3 className="mt-1 text-2xl font-bold">
+                        {plan === 'PRO'
+                          ? 'Pro Analytics Plan'
+                          : 'Free Plan'}
+                      </h3>
+
+                      <p className="text-sm text-[var(--text-secondary)]">
+                        {plan === 'PRO'
+                          ? planEndsAt
+                            ? `Plan active until ${formatDate(
+                                planEndsAt
+                              )}`
+                            : 'Active Pro subscription'
+                          : 'Upgrade to Pro to unlock premium features.'}
+                      </p>
+                    </div>
+
+                    {plan === 'FREE' && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          (window.location.href =
+                            '/pricing')
+                        }
+                        className="rounded-lg bg-[var(--primary)] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--primary-hover)]"
+                      >
+                        Upgrade Plan
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="border-t border-[var(--border-color)] pt-4">
+                    <div className="flex justify-between text-sm">
+                      <span>
+                        Subscription Status
+                      </span>
+
+                      <span className="font-medium">
+                        {subscription?.status ??
+                          (plan === 'PRO'
+                            ? 'Active'
+                            : 'Free')}
+                      </span>
+                    </div>
+
+                    {subscription?.cancelAtPeriodEnd && (
+                      <p className="mt-2 text-xs text-amber-500">
+                        Your subscription is
+                        scheduled to end at the end
+                        of the current billing period.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-4 rounded-xl border border-[var(--border-color)] p-6">
+                  <div>
+                    <h3 className="text-lg font-semibold">
+                      Account & Subscription
+                    </h3>
+
+                    <p className="text-sm text-[var(--text-secondary)]">
+                      Subscription information
+                      currently available from your
+                      account.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="rounded-lg bg-[var(--bg-accent)] p-4">
+                      <p className="text-xs text-[var(--text-secondary)]">
+                        Account
+                      </p>
+
+                      <p className="mt-1 font-medium">
+                        {profile?.email ??
+                          'Not available'}
+                      </p>
+                    </div>
+
+                    <div className="rounded-lg bg-[var(--bg-accent)] p-4">
+                      <p className="text-xs text-[var(--text-secondary)]">
+                        Current Plan
+                      </p>
+
+                      <p className="mt-1 font-medium">
+                        {plan}
+                      </p>
+                    </div>
+
+                    <div className="rounded-lg bg-[var(--bg-accent)] p-4">
+                      <p className="text-xs text-[var(--text-secondary)]">
+                        Plan End Date
+                      </p>
+
+                      <p className="mt-1 font-medium">
+                        {formatDate(planEndsAt)}
+                      </p>
+                    </div>
+
+                    <div className="rounded-lg bg-[var(--bg-accent)] p-4">
+                      <p className="text-xs text-[var(--text-secondary)]">
+                        Meta Ad Accounts
+                      </p>
+
+                      <p className="mt-1 font-medium">
+                        {
+                          accounts.filter(
+                            (account) =>
+                              enabledAccounts[
+                                account.id
+                              ]
+                          ).length
+                        }{' '}
+                        enabled
+                      </p>
+                    </div>
+
+                    <div className="rounded-lg bg-[var(--bg-accent)] p-4">
+                      <p className="text-xs text-[var(--text-secondary)]">
+                        Instagram
+                      </p>
+
+                      <p className="mt-1 font-medium">
+                        {instagramConnected
+                          ? `@${
+                              connectedInstagram?.username ??
+                              'Connected'
+                            }`
+                          : 'Not connected'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-
       </div>
-    </div>
+    </>
   );
 }
