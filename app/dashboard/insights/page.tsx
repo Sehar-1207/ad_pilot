@@ -51,16 +51,14 @@ function InsightsPageContent() {
   const [insightsError, setInsightsError] = useState("");
 
   const loadCampaigns = useCallback(async () => {
-    const firstResponse =
-      (await getCampaigns({
-        page: 1,
-        limit: 100,
-      })) as CampaignListResponse;
+    const firstResponse = (await getCampaigns({
+      page: 1,
+      limit: 100,
+    })) as CampaignListResponse;
 
     let allCampaigns = firstResponse.data?.campaigns || [];
 
-    const totalPages =
-      firstResponse.data?.pagination?.pages || 1;
+    const totalPages = firstResponse.data?.pagination?.pages || 1;
 
     if (totalPages > 1) {
       const requests = [];
@@ -237,12 +235,12 @@ function InsightsPageContent() {
         />
 
         {campaigns.length === 0 ? (
-          <div className="rounded-2xl border border-gray-200 bg-white p-10 text-center shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-900">
+          <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-10 text-center shadow-sm">
+            <h2 className="text-lg font-semibold text-[var(--text-primary)]">
               No campaigns available
             </h2>
 
-            <p className="mt-2 text-sm text-gray-500">
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">
               Connect your Meta ad account and sync your
               campaigns to see insights here.
             </p>

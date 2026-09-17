@@ -48,7 +48,6 @@ export default function PricingPage() {
   const [loading, setLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [currentPlan, setCurrentPlan] = useState<string>("FREE");
-  const [error, setError] = useState("");
 
   useEffect(() => {
     loadPlans();
@@ -58,7 +57,6 @@ export default function PricingPage() {
   const loadPlans = async () => {
     try {
       setLoading(true);
-      setError("");
 
       const response = await getPlans();
 
@@ -87,7 +85,7 @@ export default function PricingPage() {
 
       setPlans(mappedPlans);
     } catch (err: any) {
-      setError(
+      toast.error(
         err?.response?.data?.error ||
           err?.response?.data?.message ||
           "Unable to load pricing plans."
@@ -102,7 +100,9 @@ export default function PricingPage() {
       const response = await getSubscription();
 
       const plan =
-        response?.subscription?.plan?.toUpperCase() || "FREE";
+        typeof response?.subscription?.plan === "string"
+          ? response.subscription.plan.toUpperCase()
+          : response?.subscription?.plan?.name?.toUpperCase() || "FREE";
 
       setCurrentPlan(plan);
     } catch {
@@ -117,13 +117,14 @@ export default function PricingPage() {
     }
 
     if (currentPlan === "PRO") {
-      toast.info("You're already on the Pro plan.");
+      toast.info(
+        "You're already on Pro. You do not need to buy again."
+      );
       return;
     }
 
     try {
       setCheckoutLoading(plan.id);
-      setError("");
 
       const response = await createCheckoutSession();
 
@@ -139,14 +140,21 @@ export default function PricingPage() {
 
       window.location.href = checkoutUrl;
     } catch (err: any) {
-      setError(
+      setCheckoutLoading(null);
+
+      const status = err?.response?.status;
+
+      if (status === 401) {
+        toast.error("Please log in to continue.");
+        return;
+      }
+
+      toast.error(
         err?.response?.data?.error ||
           err?.response?.data?.message ||
           err?.message ||
           "Unable to start Stripe checkout."
       );
-
-      setCheckoutLoading(null);
     }
   };
 
@@ -182,12 +190,6 @@ export default function PricingPage() {
             Start for free, upgrade when you’re ready to scale your campaigns.
           </p>
         </div>
-
-        {error && (
-          <div className="max-w-4xl mx-auto mb-6 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-500 text-center">
-            {error}
-          </div>
-        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto py-4 items-stretch">
           {plans.map((plan) => {
@@ -263,9 +265,7 @@ export default function PricingPage() {
                       isCurrentPlan
                         ? "bg-[#2DD4BF]/15 text-[#2DD4BF] border border-[#2DD4BF]/40"
                         : "bg-gradient-to-r from-[#3B82F6] to-[#2DD4BF] text-white hover:opacity-95 shadow-md shadow-[#3B82F6]/20 group-hover:shadow-lg"
-                    } ${
-                      isCheckingOut ? "opacity-60" : ""
-                    }`}
+                    } ${isCheckingOut ? "opacity-60" : ""}`}
                   >
                     {isCheckingOut ? (
                       <span className="flex items-center justify-center gap-2">
