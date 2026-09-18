@@ -2,26 +2,11 @@
 
 import { CheckCircle2 } from "lucide-react";
 import { Campaign } from "@/types/insights";
-import {
-  formatCurrency,
-  formatPercent,
-  formatRoas,
-  getHealthClasses,
-  getHealthLabel,
-  getStatusClasses,
-} from "@/types/utils";
+import { formatCurrency, formatPercent, formatRoas, getHealthClasses, getHealthLabel, getStatusClasses,} from "@/types/utils";
 
-type Props = {
-  campaign: Campaign;
-  selected: boolean;
-  onClick: () => void;
-};
+type Props = { campaign: Campaign; selected: boolean; onClick: () => void};
 
-export default function CampaignSelectorCard({
-  campaign,
-  selected,
-  onClick,
-}: Props) {
+export default function CampaignSelectorCard({ campaign, selected, onClick,}: Props) {
   const healthClasses = getHealthClasses(campaign.health);
 
   return (

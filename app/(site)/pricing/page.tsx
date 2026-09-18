@@ -8,7 +8,7 @@ import {
   getSubscription,
   createCheckoutSession,
 } from "@/api/subscription";
-import { toast } from "react-toastify";
+import toast from "react-hot-toast";
 
 interface PlanFeature {
   text: string;
@@ -117,9 +117,9 @@ export default function PricingPage() {
     }
 
     if (currentPlan === "PRO") {
-      toast.info(
-        "You're already on Pro. You do not need to buy again."
-      );
+      toast("You're already on Pro. You do not need to buy again.", {
+        icon: "ℹ️",
+      });
       return;
     }
 

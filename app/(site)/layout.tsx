@@ -2,8 +2,7 @@
 
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { Toaster } from "react-hot-toast";
 
 export default function SiteLayout({
   children,
@@ -13,19 +12,14 @@ export default function SiteLayout({
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
-
       <main className="flex-1">{children}</main>
-
       <Footer />
 
-      <ToastContainer
+      <Toaster
         position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        pauseOnHover
-        draggable
+        toastOptions={{
+          duration: 3000,
+        }}
       />
     </div>
   );

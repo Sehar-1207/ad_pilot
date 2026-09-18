@@ -2,14 +2,7 @@
 
 import { ArrowLeft, Loader2, RefreshCw } from "lucide-react";
 import { Campaign } from "@/types/insights";
-import {
-  formatCurrency,
-  formatPercent,
-  formatRoas,
-  getHealthClasses,
-  getHealthLabel,
-  getStatusClasses,
-} from "@/types/utils";
+import {formatCurrency, formatPercent, formatRoas, getHealthClasses, getHealthLabel, getStatusClasses,} from "@/types/utils";
 
 type Props = {
   campaign: Campaign;
@@ -18,23 +11,31 @@ type Props = {
   onBack: () => void;
 };
 
-export default function SelectedCampaignHeader({
-  campaign,
-  loadingInsights,
-  onReAnalyze,
-  onBack,
-}: Props) {
+export default function SelectedCampaignHeader({ campaign, loadingInsights, onReAnalyze, onBack,}: Props) {
   const healthClasses = getHealthClasses(campaign.health);
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white shadow-sm">
+    <div
+      className="rounded-2xl border shadow-sm transition-colors duration-300"
+      style={{
+        backgroundColor: "var(--bg-surface)",
+        borderColor: "var(--border-color)",
+      }}
+    >
       <div className="flex flex-col gap-5 p-5 sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex items-start gap-3">
             <button
               type="button"
               onClick={onBack}
-              className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-600 transition hover:bg-gray-50"
+              className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition-colors duration-200"
+              style={{
+                borderColor: "var(--border-color)",
+                color: "var(--text-secondary)",
+                backgroundColor: "var(--bg-surface)",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "var(--bg-accent)"; }}
+              onMouseLeave={(e) => {  e.currentTarget.style.backgroundColor = "var(--bg-surface)";}}
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
@@ -50,7 +51,13 @@ export default function SelectedCampaignHeader({
                   {getHealthLabel(campaign.health)}
                 </span>
 
-                <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700">
+                <span
+                  className="rounded-full px-2.5 py-1 text-xs font-medium"
+                  style={{
+                    backgroundColor: "var(--bg-accent)",
+                    color: "var(--primary)",
+                  }}
+                >
                   PRO
                 </span>
 
@@ -65,11 +72,21 @@ export default function SelectedCampaignHeader({
                 )}
               </div>
 
-              <h1 className="mt-3 truncate text-xl font-bold text-gray-900 sm:text-2xl">
+              <h1
+                className="mt-3 truncate text-xl font-bold sm:text-2xl"
+                style={{
+                  color: "var(--text-primary)",
+                }}
+              >
                 {campaign.name}
               </h1>
 
-              <p className="mt-1 text-sm text-gray-500">
+              <p
+                className="mt-1 text-sm"
+                style={{
+                  color: "var(--text-secondary)",
+                }}
+              >
                 AI-powered performance analysis and recommendations for this
                 campaign.
               </p>
@@ -80,7 +97,19 @@ export default function SelectedCampaignHeader({
             type="button"
             onClick={onReAnalyze}
             disabled={loadingInsights}
-            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60"
+            style={{
+              backgroundColor: "var(--primary)",
+            }}
+            onMouseEnter={(e) => {
+              if (!loadingInsights) {
+                e.currentTarget.style.backgroundColor =
+                  "var(--primary-hover)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "var(--primary)";
+            }}
           >
             {loadingInsights ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -92,31 +121,88 @@ export default function SelectedCampaignHeader({
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 border-t border-gray-100 pt-5 sm:grid-cols-4">
+        <div
+          className="grid grid-cols-2 gap-3 border-t pt-5 sm:grid-cols-4"
+          style={{
+            borderColor: "var(--border-color)",
+          }}
+        >
           <div>
-            <p className="text-xs text-gray-500">Spend</p>
-            <p className="mt-1 text-lg font-semibold text-gray-900">
+            <p
+              className="text-xs"
+              style={{
+                color: "var(--text-secondary)",
+              }}
+            >
+              Spend
+            </p>
+
+            <p
+              className="mt-1 text-lg font-semibold"
+              style={{
+                color: "var(--text-primary)",
+              }}
+            >
               {formatCurrency(campaign.spend)}
             </p>
           </div>
 
           <div>
-            <p className="text-xs text-gray-500">ROAS</p>
-            <p className="mt-1 text-lg font-semibold text-gray-900">
+            <p
+              className="text-xs"
+              style={{
+                color: "var(--text-secondary)",
+              }}
+            >
+              ROAS
+            </p>
+
+            <p
+              className="mt-1 text-lg font-semibold"
+              style={{
+                color: "var(--text-primary)",
+              }}
+            >
               {formatRoas(campaign.roas)}
             </p>
           </div>
 
           <div>
-            <p className="text-xs text-gray-500">Conversions</p>
-            <p className="mt-1 text-lg font-semibold text-gray-900">
+            <p
+              className="text-xs"
+              style={{
+                color: "var(--text-secondary)",
+              }}
+            >
+              Conversions
+            </p>
+
+            <p
+              className="mt-1 text-lg font-semibold"
+              style={{
+                color: "var(--text-primary)",
+              }}
+            >
               {campaign.conversions ?? 0}
             </p>
           </div>
 
           <div>
-            <p className="text-xs text-gray-500">CTR</p>
-            <p className="mt-1 text-lg font-semibold text-gray-900">
+            <p
+              className="text-xs"
+              style={{
+                color: "var(--text-secondary)",
+              }}
+            >
+              CTR
+            </p>
+
+            <p
+              className="mt-1 text-lg font-semibold"
+              style={{
+                color: "var(--text-primary)",
+              }}
+            >
               {formatPercent(campaign.ctr)}
             </p>
           </div>
