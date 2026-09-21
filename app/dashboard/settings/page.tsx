@@ -2,11 +2,12 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import apiClient from "@/api/client";
-import { connectMeta, getMetaStatus, getMetaAdAccounts, connectMetaAdAccount, disconnectMeta, syncMeta, } from "@/api/meta";
-import { getInstagramAccounts, getConnectedInstagram, connectInstagram, syncInstagram, disconnectInstagram, } from "@/api/instagram";
+import { updateAdAccountSync } from "@/api/dashboad";
+import { connectMeta, getMetaStatus, getMetaAdAccounts, connectMetaAdAccount, disconnectMeta, syncMeta,} from "@/api/meta";
+import { getInstagramAccounts, getConnectedInstagram, connectInstagram, syncInstagram, disconnectInstagram,} from "@/api/instagram";
 import MetaBusinessCard from "@/components/dashboard/settings/MetaBusinessCard";
-import MetaAdAccountsCard, { AdAccount, } from "@/components/dashboard/settings/AdAccountCard";
-import InstagramAccountCard, { InstagramAccount, ConnectedInstagramAccount, } from "@/components/dashboard/settings/InstaAccountCard";
+import MetaAdAccountsCard, {  AdAccount,} from "@/components/dashboard/settings/AdAccountCard";
+import InstagramAccountCard, { InstagramAccount, ConnectedInstagramAccount,} from "@/components/dashboard/settings/InstaAccountCard";
 import PreferencesCard from "@/components/dashboard/settings/PreferenceCard";
 import BillingCard from "@/components/dashboard/settings/BillingCard";
 
@@ -290,9 +291,7 @@ export default function SettingsPage() {
         ...previous,
         [accountId]: nextValue,
       }));
-      await apiClient.patch(`/dashboard/settings/ad-accounts/${accountId}`, {
-        enabled: nextValue,
-      });
+      await updateAdAccountSync(accountId, nextValue);
       toast.success(
         nextValue ? "Ad account enabled." : "Ad account disabled."
       );

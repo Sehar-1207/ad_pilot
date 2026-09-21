@@ -5,14 +5,14 @@
     --bg-primary: #F8FAFC;
     --bg-surface: #FFFFFF;
     --bg-accent: #F1F5F9;
-    
+
     --text-primary: #1E2432;
     --text-secondary: #64748B;
     --border-color: #E2E8F0;
-    
+
     --primary: #3B82F6;
     --primary-hover: #2563EB;
-    
+
     --accent-teal: #14B8A6;
     --accent-cyan: #06B6D4;
     --brand-blue: #3B82F6;
@@ -29,14 +29,14 @@
     --bg-primary: #0F172A;
     --bg-surface: #1E293B;
     --bg-accent: #334155;
-    
+
     --text-primary: #F8FAFC;
     --text-secondary: #94A3B8;
     --border-color: #334155;
-    
+
     --primary: #3B82F6;
     --primary-hover: #2563EB;
-    
+
     --accent-teal: #2DD4BF;
     --accent-cyan: #22D3EE;
     --brand-blue: #3B82F6;
@@ -65,10 +65,10 @@ body {
 }
 
 .admin-users-scroll::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: transparent;
   border-radius: 9999px;
 }
 
 .admin-users-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: transparent;
 }

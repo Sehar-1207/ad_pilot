@@ -22,12 +22,12 @@ interface BackendSubscription {
     subscriptionId: string | null;
     priceId: string | null;
     status:
-      | 'active'
-      | 'trialing'
-      | 'past_due'
-      | 'canceled'
-      | 'unpaid'
-      | null;
+    | 'active'
+    | 'trialing'
+    | 'past_due'
+    | 'canceled'
+    | 'unpaid'
+    | null;
     cancelAtPeriodEnd: boolean;
     currentPeriodStart: string | null;
     currentPeriodEnd: string | null;
@@ -63,7 +63,7 @@ export default function AdminSubscriptionsPage() {
       if (!response?.success) {
         throw new Error(
           response?.error ||
-            'Failed to load subscriptions.'
+          'Failed to load subscriptions.'
         );
       }
 
@@ -96,7 +96,7 @@ export default function AdminSubscriptionsPage() {
 
           const amount =
             stripe?.amount !== null &&
-            stripe?.amount !== undefined
+              stripe?.amount !== undefined
               ? stripe.amount
               : null;
 
@@ -165,8 +165,8 @@ export default function AdminSubscriptionsPage() {
 
       setError(
         err?.response?.data?.error ||
-          err?.message ||
-          'Failed to load subscriptions.'
+        err?.message ||
+        'Failed to load subscriptions.'
       );
     } finally {
       setLoading(false);
@@ -277,12 +277,12 @@ export default function AdminSubscriptionsPage() {
     const churnRate =
       totalSubscriptions > 0
         ? Number(
-            (
-              (canceled /
-                totalSubscriptions) *
-              100
-            ).toFixed(1)
-          )
+          (
+            (canceled /
+              totalSubscriptions) *
+            100
+          ).toFixed(1)
+        )
         : 0;
 
     return {
@@ -400,9 +400,7 @@ export default function AdminSubscriptionsPage() {
       ) : (
         <>
           <SubscriptionsTable
-            subscriptions={
-              paginatedSubscriptions
-            }
+            subscriptions={paginatedSubscriptions}
           />
 
           {totalPages > 1 && (
