@@ -1,7 +1,7 @@
 "use client";
 
-import CampaignSelectorCard from "./CampaignSelector";
 import { Campaign } from "@/types/insights";
+import CampaignSelectorCard from "./CampaignSelector";
 
 type Props = {
   campaigns: Campaign[];
@@ -15,20 +15,35 @@ export default function CampaignSelector({
   onSelect,
 }: Props) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+    <div
+      className="rounded-2xl border p-5 shadow-sm"
+      style={{
+        backgroundColor: "var(--bg-surface)",
+        borderColor: "var(--border-color)",
+      }}
+    >
       <div className="mb-5 flex items-center justify-between">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">
+          <h2
+            className="text-base font-semibold"
+            style={{ color: "var(--text-primary)" }}
+          >
             Campaign Performance
           </h2>
 
-          <p className="mt-1 text-xs text-gray-500">
+          <p
+            className="mt-1 text-xs"
+            style={{ color: "var(--text-secondary)" }}
+          >
             Select a campaign to analyze it with AI.
           </p>
         </div>
 
-        <span className="text-xs font-medium text-gray-500">
-          {campaigns.length} campaigns
+        <span
+          className="text-xs font-medium"
+          style={{ color: "var(--text-secondary)" }}
+        >
+          {campaigns.length} campaign{campaigns.length !== 1 ? "s" : ""}
         </span>
       </div>
 

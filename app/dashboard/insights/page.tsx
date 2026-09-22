@@ -2,7 +2,6 @@
 
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import apiClient from "@/api/client";
 
 import CampaignInsightsHeader from "@/components/dashboard/insights/CampaignHeader";
 import CampaignSelector from "@/components/dashboard/insights/CampaignsSelection";
@@ -19,7 +18,6 @@ import {
   CampaignDetailResponse,
   CampaignListResponse,
   InsightsResponse,
-  UserResponse,
 } from "@/types/insights";
 
 import {
@@ -27,6 +25,8 @@ import {
   getCampaignAIInsights,
   getCampaigns,
 } from "@/api/dashboad";
+
+import { getSubscription } from "@/api/subscription";
 
 function InsightsPageContent() {
   const router = useRouter();
@@ -38,7 +38,7 @@ function InsightsPageContent() {
   const [selectedCampaign, setSelectedCampaign] =
     useState<Campaign | null>(null);
 
-  const [plan, setPlan] = useState<string | null>(null);
+  const [plan, setPlan] = useState<"FREE" | "PRO" | null>(null);
 
   const [answer, setAnswer] = useState("");
   const [generatedAt, setGeneratedAt] = useState("");
@@ -57,7 +57,6 @@ function InsightsPageContent() {
     })) as CampaignListResponse;
 
     let allCampaigns = firstResponse.data?.campaigns || [];
-
     const totalPages = firstResponse.data?.pagination?.pages || 1;
 
     if (totalPages > 1) {
@@ -84,8 +83,6 @@ function InsightsPageContent() {
     }
 
     setCampaigns(allCampaigns);
-
-    return firstResponse.data?.access?.isPro ?? false;
   }, []);
 
   const loadInsights = useCallback(async (id: string) => {
@@ -117,6 +114,7 @@ function InsightsPageContent() {
       try {
         setLoadingCampaign(true);
         setError("");
+        setInsightsError("");
 
         const response =
           (await getCampaign(id)) as CampaignDetailResponse;
@@ -126,6 +124,8 @@ function InsightsPageContent() {
         await loadInsights(id);
       } catch (err: any) {
         setSelectedCampaign(null);
+        setAnswer("");
+        setGeneratedAt("");
 
         setError(
           err?.response?.data?.error ||
@@ -144,11 +144,22 @@ function InsightsPageContent() {
       setLoadingPage(true);
       setError("");
 
-      const userResponse =
-        await apiClient.get<UserResponse>("/auth/me");
+      const subscriptionResponse = await getSubscription();
+
+      const subscriptionData =
+        subscriptionResponse?.data ||
+        subscriptionResponse?.subscription ||
+        subscriptionResponse;
+
+      const rawPlan =
+        subscriptionData?.plan?.name ||
+        subscriptionData?.plan ||
+        subscriptionData?.subscription?.plan?.name ||
+        subscriptionData?.subscription?.plan ||
+        "FREE";
 
       const currentPlan =
-        userResponse.data?.data?.plan || "FREE";
+        String(rawPlan).toUpperCase() === "PRO" ? "PRO" : "FREE";
 
       setPlan(currentPlan);
 
@@ -157,15 +168,11 @@ function InsightsPageContent() {
         setSelectedCampaign(null);
         setAnswer("");
         setGeneratedAt("");
+        setInsightsError("");
         return;
       }
 
-      const isPro = await loadCampaigns();
-
-      if (!isPro) {
-        setPlan("FREE");
-        return;
-      }
+      await loadCampaigns();
 
       if (campaignId) {
         await loadSelectedCampaign(campaignId);
@@ -173,6 +180,7 @@ function InsightsPageContent() {
         setSelectedCampaign(null);
         setAnswer("");
         setGeneratedAt("");
+        setInsightsError("");
       }
     } catch (err: any) {
       setError(
@@ -196,9 +204,7 @@ function InsightsPageContent() {
   };
 
   const handleReAnalyze = async () => {
-    if (!campaignId) {
-      return;
-    }
+    if (!campaignId) return;
 
     await loadInsights(campaignId);
   };
@@ -207,12 +213,16 @@ function InsightsPageContent() {
     router.push("/dashboard/campaigns");
   };
 
+  const handleUpgrade = () => {
+    router.push("/pricing");
+  };
+
   if (loadingPage) {
     return <InsightsLoading />;
   }
 
   if (plan !== "PRO") {
-    return <ProUpgradeCard onBack={handleBack} />;
+    return <ProUpgradeCard onUpgrade={handleUpgrade} />;
   }
 
   if (error && !selectedCampaign && campaignId) {
@@ -235,14 +245,26 @@ function InsightsPageContent() {
         />
 
         {campaigns.length === 0 ? (
-          <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-10 text-center shadow-sm">
-            <h2 className="text-lg font-semibold text-[var(--text-primary)]">
+          <div
+            className="rounded-2xl border p-10 text-center shadow-sm"
+            style={{
+              backgroundColor: "var(--bg-surface)",
+              borderColor: "var(--border-color)",
+            }}
+          >
+            <h2
+              className="text-lg font-semibold"
+              style={{ color: "var(--text-primary)" }}
+            >
               No campaigns available
             </h2>
 
-            <p className="mt-2 text-sm text-[var(--text-secondary)]">
-              Connect your Meta ad account and sync your
-              campaigns to see insights here.
+            <p
+              className="mt-2 text-sm"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              Connect your Meta ad account and sync your campaigns
+              to see insights here.
             </p>
           </div>
         ) : (

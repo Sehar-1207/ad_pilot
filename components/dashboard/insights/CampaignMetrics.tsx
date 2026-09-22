@@ -13,38 +13,14 @@ type Props = {
 
 export default function CampaignMetrics({ campaign }: Props) {
   const metrics = [
-    {
-      label: "Impressions",
-      value: formatNumber(campaign.impressions),
-    },
-    {
-      label: "Reach",
-      value: formatNumber(campaign.reach),
-    },
-    {
-      label: "Clicks",
-      value: formatNumber(campaign.clicks),
-    },
-    {
-      label: "CPC",
-      value: formatCurrency(campaign.cpc),
-    },
-    {
-      label: "CPM",
-      value: formatCurrency(campaign.cpm),
-    },
-    {
-      label: "Revenue",
-      value: formatCurrency(campaign.revenue),
-    },
-    {
-      label: "Cost / Conversion",
-      value: formatCurrency(campaign.costPerConversion),
-    },
-    {
-      label: "ROAS",
-      value: formatRoas(campaign.roas),
-    },
+    { label: "Impressions", value: formatNumber(campaign.impressions) },
+    { label: "Reach", value: formatNumber(campaign.reach) },
+    { label: "Clicks", value: formatNumber(campaign.clicks) },
+    { label: "CPC", value: formatCurrency(campaign.cpc) },
+    { label: "CPM", value: formatCurrency(campaign.cpm) },
+    { label: "Revenue", value: formatCurrency(campaign.revenue) },
+    { label: "Cost / Conversion", value: formatCurrency(campaign.costPerConversion) },
+    { label: "ROAS", value: formatRoas(campaign.roas) },
   ];
 
   return (
@@ -52,11 +28,17 @@ export default function CampaignMetrics({ campaign }: Props) {
       {metrics.map((metric) => (
         <div
           key={metric.label}
-          className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
+          className="rounded-xl border p-4 shadow-sm"
+          style={{
+            backgroundColor: "var(--bg-surface)",
+            borderColor: "var(--border-color)",
+          }}
         >
-          <p className="text-xs text-gray-500">{metric.label}</p>
+          <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
+            {metric.label}
+          </p>
 
-          <p className="mt-2 text-lg font-semibold text-gray-900">
+          <p className="mt-2 text-lg font-semibold" style={{ color: "var(--text-primary)" }}>
             {metric.value}
           </p>
         </div>
